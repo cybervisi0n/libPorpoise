@@ -392,6 +392,7 @@ void CommandProcessor::ProcessBpReg(u8 regAddr, u32 value) {
                   const u32 shift = half * 12;
                   auto& s = gxState.GetTevStageConfig(stage);
                   gxState.SetTevTexMap(stage, static_cast<GXTexMapID>(GetRegValue(value, 3, shift)));
+                  gxState.SetTevTexMapDirty(true);
                   s.mTexCoordId = static_cast<GXTexCoordID>(GetRegValue(value, 3, shift + 3));
                   if (!GetRegValue(value, 1, shift + 6)) {
                     gxState.SetTevTexMap(stage, GX_TEXMAP_NULL);

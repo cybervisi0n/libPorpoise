@@ -354,6 +354,7 @@ void GlobalState::RefreshPositionMatrices(u32 firstAddress, u32 endAddress) {
             }
         }
         mPositionMatrixValid[slot] = true;
+        mPosTextureMtxDirty = true;
     }
 }
 
@@ -375,6 +376,7 @@ void GlobalState::RefreshNormalMatrices(u32 firstAddress, u32 endAddress) {
             }
         }
         mNormalMatrixValid[slot] = true;
+        mNormalMtxDirty = true;
     }
 }
 
@@ -396,6 +398,7 @@ void GlobalState::RefreshTextureMatrices(u32 firstAddress, u32 endAddress) {
             }
         }
         mTextureMatrixValid[slot] = true;
+        mPosTextureMtxDirty = true;
     }
 }
 
@@ -434,6 +437,8 @@ void GlobalState::RefreshLights(u32 firstAddress, u32 endAddress) {
         light.mDirection[0] = *(float*)(lightXfPtr+13);
         light.mDirection[1] = *(float*)(lightXfPtr+14);
         light.mDirection[2] = *(float*)(lightXfPtr+15);
+
+        mLightsDirty = true;
     }
 }
 

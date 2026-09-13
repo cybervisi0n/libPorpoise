@@ -162,6 +162,14 @@ class GlobalState {
   inline void SetTextureDirty(bool dirty) { mTextureDirty = dirty; };
   inline bool GetTevDirty() { return mTevDirty; };
   inline void SetTevDirty(bool dirty) { mTevDirty = dirty; };
+  inline bool GetIsTevTexMapDirty() { return mTevTexMapDirty; };
+  inline void SetTevTexMapDirty(bool dirty) {mTevTexMapDirty = dirty;};
+  inline bool GetIsLightsDirty() {return mLightsDirty; };
+  inline void SetLightsDirty(bool dirty) {mLightsDirty = dirty;};
+  inline bool GetIsPosTextureMtxDirty() {return mPosTextureMtxDirty;};
+  inline void SetPosTextureMtxDirty(bool dirty) {mPosTextureMtxDirty = dirty;};
+  inline bool GetIsNormalMtxDirty() {return mNormalMtxDirty;};
+  inline void SetNormalMtxDirty(bool dirty) {mNormalMtxDirty = dirty;};
   inline const Light* GetLightsArray() { return mLights.data(); };
   inline const ColorChannel* GetColorChannelArray() { return mColorChannels.data(); };
   inline Light& GetLight(GXLightID lightId) { return mLights[lightId]; };
@@ -256,6 +264,10 @@ class GlobalState {
   bool mDepthDirty;
   bool mProjectionMatrixDirty;
   bool mTexGenDirty;
+  bool mTevTexMapDirty;
+  bool mLightsDirty;
+  bool mPosTextureMtxDirty;
+  bool mNormalMtxDirty;
 };
 
 void InitGlobalState();

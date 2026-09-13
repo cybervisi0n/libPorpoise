@@ -248,13 +248,14 @@ void GlRenderer::Draw(const RenderVertex * vertices, size_t numVertices, GXPrimi
         return;
     }
 
-    GLint shaderProgram = 0;
-    glGetIntegerv(GL_CURRENT_PROGRAM, &shaderProgram);
-    if (shaderProgram == 0) {
-        return;
-    }
+    //GLint shaderProgram = 0;
+    //glGetIntegerv(GL_CURRENT_PROGRAM, &shaderProgram);
+    //if (shaderProgram == 0) {
+    //    return;
+    //}
 
-    glUseProgram(shaderProgram);
+    
+    //glUseProgram(shaderProgram);
 
     if(gxState.GetIsProjectionMatrixDirty()) {
         glUniformMatrix4fv(
@@ -275,8 +276,11 @@ void GlRenderer::Draw(const RenderVertex * vertices, size_t numVertices, GXPrimi
     }
 
 
+    if(gxState.GetIsTevTexMapDirty()) {
+        glUniform1iv(mTevTexMapLocation, GX_MAX_TEVSTAGE, (const GLint*)gxState.GetTevTexMapArray());
+        gxState.SetTevTexMapDirty(false);
+    }
     
-    glUniform1iv(mTevTexMapLocation, GX_MAX_TEVSTAGE, (const GLint*)gxState.GetTevTexMapArray());
 
     if(gxState.GetTevDirty()) {
         glBindBuffer(GL_UNIFORM_BUFFER, mTevStageUniformBuffer);
@@ -287,20 +291,35 @@ void GlRenderer::Draw(const RenderVertex * vertices, size_t numVertices, GXPrimi
     }
 
     //upload matrix memory position + texture
-    glBindBuffer(GL_UNIFORM_BUFFER, mMatrixMemoryUniformBuffer);
-    const float * matrixMem = gxState.GetXfMemoryPointer();
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, 240 * sizeof(float), gxState.GetXfMemoryPointer());
-    // upload matrix memory normal mtx
-    glBufferSubData(GL_UNIFORM_BUFFER, 240 * sizeof(float), 90 * sizeof(float), gxState.GetXfMemoryPointer() + 0x400);
-    glBindBufferBase(GL_UNIFORM_BUFFER, mMatrixMemoryBlockBinding, mMatrixMemoryUniformBuffer);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    if(gxState.GetIsPosTextureMtxDirty()) {
+        glBindBuffer(GL_UNIFORM_BUFFER, mMatrixMemoryUniformBuffer);
+        const float * matrixMem = gxState.GetXfMemoryPointer();
+        glBufferSubData(GL_UNIFORM_BUFFER, 0, 240 * sizeof(float), gxState.GetXfMemoryPointer());
+        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+        gxState.SetPosTextureMtxDirty(false);
+    }
 
-    // pass lights data. TODO: Add dirty state checker
-    glBindBuffer(GL_UNIFORM_BUFFER, mLightsUniformBuffer);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Light) * 8, gxState.GetLightsArray());
-    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(Light) * 8, sizeof(ColorChannel) * 4, gxState.GetColorChannelArray());
-    glBindBufferBase(GL_UNIFORM_BUFFER, mLightConfigBlockBinding, mLightsUniformBuffer);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    if(gxState.GetIsNormalMtxDirty()) {
+        // upload matrix memory normal mtx
+        glBindBuffer(GL_UNIFORM_BUFFER, mMatrixMemoryUniformBuffer);
+        const float * matrixMem = gxState.GetXfMemoryPointer();
+        glBufferSubData(GL_UNIFORM_BUFFER, 240 * sizeof(float), 90 * sizeof(float), gxState.GetXfMemoryPointer() + 0x400);
+        glBindBufferBase(GL_UNIFORM_BUFFER, mMatrixMemoryBlockBinding, mMatrixMemoryUniformBuffer);
+        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+        gxState.SetNormalMtxDirty(false);
+    }
+
+
+
+    // pass lights data
+    if(gxState.GetIsLightsDirty()) {
+        glBindBuffer(GL_UNIFORM_BUFFER, mLightsUniformBuffer);
+        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Light) * 8, gxState.GetLightsArray());
+        glBufferSubData(GL_UNIFORM_BUFFER, sizeof(Light) * 8, sizeof(ColorChannel) * 4, gxState.GetColorChannelArray());
+        glBindBufferBase(GL_UNIFORM_BUFFER, mLightConfigBlockBinding, mLightsUniformBuffer);
+        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+        gxState.SetLightsDirty(false);
+    }
 
     glUniform1ui(mMtxIdxALocation, gxState.GetCurrentPositionMtxIdx());
     glUniform1ui(mPnMtxIdxEnabledLocation, gxState.GetVertexDescriptor(GX_VA_PNMTXIDX) != GX_NONE);
