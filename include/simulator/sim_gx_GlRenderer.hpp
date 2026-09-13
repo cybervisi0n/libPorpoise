@@ -14,6 +14,12 @@ class GlRenderer {
  public:
   void Draw(const RenderVertex * vertices, size_t numVertices, GXPrimitive primitive);
 
+  inline int GetBatchableDrawcalls() {return mBatchableDrawcalls; };
+  inline void ResetBatchableDrawcalls() {mBatchableDrawcalls = 0; };
+
+  inline int GetTotalDrawcalls() {return mTotalDrawcalls; };
+  inline void ResetTotalDrawcalls() {mTotalDrawcalls = 0; };
+
  private:
   void Initialize();
 
@@ -42,6 +48,9 @@ class GlRenderer {
   int mMtxIdxALocation;
   int mPnMtxIdxEnabledLocation;
 
+
+  int mBatchableDrawcalls = 0;
+  int mTotalDrawcalls = 0;
 };
 
 GlRenderer& GetGlRenderer();

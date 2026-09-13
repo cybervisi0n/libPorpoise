@@ -1,3 +1,4 @@
+#include "simulator/sim_gx_GlRenderer.hpp"
 #define LIBPORPOISE_MAIN_HANDLED
 #define SDL_MAIN_HANDLED
 #include <dolphin.h>
@@ -246,6 +247,10 @@ void MainLoop() {
         // Tell GX thread it can have its context back
         SIM::GX::GiveRenderContext();
 
+        //printf("GX: %d Drawcalls %d Batchable\n", GX::GetGlRenderer().GetTotalDrawcalls(), GX::GetGlRenderer().GetBatchableDrawcalls());
+        GX::GetGlRenderer().ResetBatchableDrawcalls();
+        GX::GetGlRenderer().ResetTotalDrawcalls();
+        
 
         //Call Post Vblank callback
         SIM::VI::HandlePostRetrace();

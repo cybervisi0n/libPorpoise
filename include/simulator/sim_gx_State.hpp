@@ -170,6 +170,14 @@ class GlobalState {
   inline void SetPosTextureMtxDirty(bool dirty) {mPosTextureMtxDirty = dirty;};
   inline bool GetIsNormalMtxDirty() {return mNormalMtxDirty;};
   inline void SetNormalMtxDirty(bool dirty) {mNormalMtxDirty = dirty;};
+  inline bool GetIsNumChannelsDirty() {return mNumChannelsDirty;};
+  inline void SetNumChannelsDirty(bool dirty) {mNumChannelsDirty = dirty;};
+  inline bool GetIsNumTevStagesDirty() {return mNumTevStagesDirty;};
+  inline void SetNumTevStagesDirty(bool dirty) {mNumTevStagesDirty = dirty;};
+  inline bool GetIsInitialTevColorsDirty() {return mInitialTevColorsDirty;};
+  inline void SetInitialTevColorsDirty(bool dirty) {mInitialTevColorsDirty = dirty;};
+  inline bool GetIsMatrixIndexDirty() {return mMatrixIndexDirty; };
+  inline void SetMatrixIndexDirty(bool dirty) {mMatrixIndexDirty = dirty;};
   inline const Light* GetLightsArray() { return mLights.data(); };
   inline const ColorChannel* GetColorChannelArray() { return mColorChannels.data(); };
   inline Light& GetLight(GXLightID lightId) { return mLights[lightId]; };
@@ -186,8 +194,9 @@ class GlobalState {
   inline void SetCurrentPrimitive(GXPrimitive primitive) {mCurrentPrimitive = primitive;};
   inline void SetCurrentPositionMatrix(u32 matrixId) {
     const size_t slot = static_cast<size_t>(matrixId / 3);
-    if (slot < mPositionMatrices.size()) {
+    if ((slot < mPositionMatrices.size()) && (slot != mCurrentPositionMatrix)) {
         mCurrentPositionMatrix = slot;
+        mMatrixIndexDirty = true;
     }
   };
   inline void SetCurrentVertexFormat(GXVtxFmt format) {mCurrentVertexFormat = format;};
@@ -204,11 +213,26 @@ class GlobalState {
   };
   void SetXfData(u32 address, const u8* data, size_t wordCount);
   inline void SetNumTexGens(u8 numTexGens) { mNumTexGens = numTexGens; };
-  inline void SetNumChannels(u8 numChannels) { mNumChannels = numChannels; };
-  inline void SetNumTevStages(u8 numTevStages) { mNumTevStages = numTevStages; };
+  inline void SetNumChannels(u8 numChannels) { 
+    if(numChannels != mNumChannels) {
+      mNumChannels = numChannels; 
+      mNumChannelsDirty = true;
+    }
+  };
+  inline void SetNumTevStages(u8 numTevStages) { 
+    if(numTevStages != mNumTevStages) {
+      mNumTevStages = numTevStages; 
+      mNumTevStagesDirty = true;
+    }
+  };
   inline void SetCullMode(GXCullMode cullMode) { mCullMode = cullMode; };
   inline void SetTevTexMap(u8 tevStage, GXTexMapID texMap) { mTevTexMaps[tevStage] = texMap; };
-  inline void SetTlutAssignment(GXTexMapID texMap, u8 tlutName) { mTlutAssignments[texMap] = tlutName; };
+  inline void SetTlutAssignment(GXTexMapID texMap, u8 tlutName) { 
+    if(mTlutAssignments[texMap] != tlutName) {
+      mTlutAssignments[texMap] = tlutName; 
+      mTextureDirty = true;
+    }
+  };
   void SetTevColor(u8 reg, std::array<float, 4>& color);
   inline void SetDepthCompareEnabled(bool enabled) { mDepthCompareEnabled = enabled; mDepthDirty = true; };
   inline void SetDepthUpdateEnabled(bool enabled) { mDepthUpdateEnabled = enabled; mDepthDirty = true;};
@@ -256,18 +280,22 @@ class GlobalState {
   std::array<u8, GX_MAX_TEXMAP> mTlutAssignments = {};
   std::array<Light, 8> mLights = {};
   std::array<ColorChannel, 4> mColorChannels = {};
-  bool mTextureDirty;
-  bool mTevDirty;
+  bool mTextureDirty = true;
+  bool mTevDirty = true;
   GXCompare mDepthFunc;
   bool mDepthCompareEnabled;
   bool mDepthUpdateEnabled;
-  bool mDepthDirty;
-  bool mProjectionMatrixDirty;
-  bool mTexGenDirty;
-  bool mTevTexMapDirty;
-  bool mLightsDirty;
-  bool mPosTextureMtxDirty;
-  bool mNormalMtxDirty;
+  bool mDepthDirty = true;
+  bool mProjectionMatrixDirty = true;
+  bool mTexGenDirty = true;
+  bool mTevTexMapDirty = true;
+  bool mLightsDirty = true;
+  bool mPosTextureMtxDirty = true;
+  bool mNormalMtxDirty = true;
+  bool mNumChannelsDirty = true;
+  bool mNumTevStagesDirty = true;
+  bool mInitialTevColorsDirty = true;
+  bool mMatrixIndexDirty = true;
 };
 
 void InitGlobalState();

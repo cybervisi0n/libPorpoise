@@ -15,6 +15,7 @@
 
 namespace {
 
+
 const SIM::GX::RenderVertex * ExpandQuads(
     const SIM::GX::RenderVertex * vertices, size_t numVertices) {
     SIM::GX::RenderVertex * triangles = new SIM::GX::RenderVertex[(numVertices / 4) * 6];
@@ -211,6 +212,56 @@ void GlRenderer::Draw(const RenderVertex * vertices, size_t numVertices, GXPrimi
     Initialize();
     auto& gxState = GetGlobalState();
 
+    mTotalDrawcalls++;
+
+
+    #if 0
+    // Dirty state logging
+    {
+        bool dirtyStates[10];
+
+        dirtyStates[0] = gxState.GetIsTextureDirty();
+        dirtyStates[1] = gxState.GetIsDepthDirty();
+        dirtyStates[2] = gxState.GetIsProjectionMatrixDirty();
+        dirtyStates[3] = gxState.GetIsTexGenDirty();
+        dirtyStates[4] = gxState.GetTevDirty();
+        dirtyStates[5] = gxState.GetIsTevTexMapDirty();
+        dirtyStates[6] = gxState.GetIsLightsDirty();
+        dirtyStates[7] = gxState.GetIsPosTextureMtxDirty();
+        dirtyStates[8] = gxState.GetIsNormalMtxDirty();
+
+        printf("GX: %d, %d, %d, %d, %d, %d, %d, %d, %d, %d\n", 
+            numVertices,
+            dirtyStates[0],
+            dirtyStates[1],
+            dirtyStates[2],
+            dirtyStates[3],
+            dirtyStates[4],
+            dirtyStates[5],
+            dirtyStates[6],
+            dirtyStates[7],
+            dirtyStates[8]);
+    }
+    #endif
+
+    if(
+        !gxState.GetIsTextureDirty() &&
+        !gxState.GetIsDepthDirty() &&
+        !gxState.GetIsProjectionMatrixDirty() &&
+        !gxState.GetIsTexGenDirty() &&
+        !gxState.GetTevDirty() &&
+        !gxState.GetIsTevTexMapDirty() &&
+        !gxState.GetIsLightsDirty() &&
+        !gxState.GetIsPosTextureMtxDirty() &&
+        !gxState.GetIsNormalMtxDirty() && 
+        !gxState.GetIsNumChannelsDirty() &&
+        !gxState.GetIsNumTevStagesDirty() &&
+        !gxState.GetIsInitialTevColorsDirty() && 
+        !gxState.GetIsMatrixIndexDirty()
+    ) {
+        mBatchableDrawcalls++;
+    }
+
     if(gxState.GetIsTextureDirty()) {
         TextureManager::GetInstance().ProcessTextures();
         gxState.SetTextureDirty(false);
@@ -309,8 +360,6 @@ void GlRenderer::Draw(const RenderVertex * vertices, size_t numVertices, GXPrimi
         gxState.SetNormalMtxDirty(false);
     }
 
-
-
     // pass lights data
     if(gxState.GetIsLightsDirty()) {
         glBindBuffer(GL_UNIFORM_BUFFER, mLightsUniformBuffer);
@@ -321,14 +370,28 @@ void GlRenderer::Draw(const RenderVertex * vertices, size_t numVertices, GXPrimi
         gxState.SetLightsDirty(false);
     }
 
-    glUniform1ui(mMtxIdxALocation, gxState.GetCurrentPositionMtxIdx());
+    if(gxState.GetIsMatrixIndexDirty()) {
+        glUniform1ui(mMtxIdxALocation, gxState.GetCurrentPositionMtxIdx());
+        gxState.SetMatrixIndexDirty(false);
+    }
+
     glUniform1ui(mPnMtxIdxEnabledLocation, gxState.GetVertexDescriptor(GX_VA_PNMTXIDX) != GX_NONE);
 
-    glUniform1ui(mNumChansLocation, gxState.GetNumChannels());
+    if(gxState.GetIsNumChannelsDirty()) {
+        glUniform1ui(mNumChansLocation, gxState.GetNumChannels());
+        gxState.SetNumChannelsDirty(false);
+    }
 
-    glUniform4fv(mInitialTevColorsLocation, 4, gxState.GetInitialTevColorsArray());
+    if(gxState.GetIsInitialTevColorsDirty()) {
+        glUniform4fv(mInitialTevColorsLocation, 4, gxState.GetInitialTevColorsArray());
+        gxState.SetInitialTevColorsDirty(false);
+    }
 
-    glUniform1ui(mNumTevStagesLocation, gxState.GetNumTevStages());
+    if(gxState.GetIsNumTevStagesDirty()) {
+        glUniform1ui(mNumTevStagesLocation, gxState.GetNumTevStages());
+        gxState.SetNumTevStagesDirty(false);
+    }
+
 
     glBindVertexArray(mVertexArray);
     glBindBuffer(GL_ARRAY_BUFFER, mVertexBuffer);

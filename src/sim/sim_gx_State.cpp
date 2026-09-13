@@ -268,9 +268,11 @@ void GlobalState::SetXfData(u32 address, const u8* data, size_t wordCount) {
                 // MTX index A
                 for (u32 j = 0; j < 4; j++) {
                   auto texMtx = static_cast<GXTexMtx>(GetRegValue(dataWords[i], 6, 6 + j * 6));
-                  mTexGenConfigs[j].mMatrixId = texMtx;
+                  if(mTexGenConfigs[j].mMatrixId != texMtx) {
+                    mTexGenConfigs[j].mMatrixId = texMtx;
+                    mTexGenDirty = true;
+                  }
                 }
-                mTexGenDirty = true;
             } else if (reg == 0x20 && wordCount - i >= 7) {
                 // Projection matrix
                 const float p0 = WordToFloat(dataWords[i]);
@@ -314,15 +316,25 @@ void GlobalState::SetXfData(u32 address, const u8* data, size_t wordCount) {
                 u32 srcRow = GetRegValue(value, 5, 7);
             
                 if (tgType == 0) {
-                  texGenConfig.mType = proj ? GX_TG_MTX3x4 : GX_TG_MTX2x4;
+                  GXTexGenType newType = proj ? GX_TG_MTX3x4 : GX_TG_MTX2x4;
+                  if(newType != texGenConfig.mType) {
+                    texGenConfig.mType = newType;
+                    mTexGenDirty = true;
+                  }
+                  
                 } else if (tgType == 1) {
                   // Bump mapping: type encodes emboss light
-                  texGenConfig.mType = static_cast<GXTexGenType>(GetRegValue(value, 3, 15) + 2);
+                  GXTexGenType newType = static_cast<GXTexGenType>(GetRegValue(value, 3, 15) + 2);
+                  if(texGenConfig.mType != newType) {
+                    texGenConfig.mType = newType;
+                    mTexGenDirty = true;
+                  }
                 } else if (tgType == 2 || tgType == 3) {
-                  texGenConfig.mType = GX_TG_SRTG;
-                  //tcg.src = tgType == 2 ? GX_TG_COLOR0 : GX_TG_COLOR1;
+                  if(texGenConfig.mType != GX_TG_SRTG) {
+                    texGenConfig.mType = GX_TG_SRTG;
+                    mTexGenDirty = true;
+                  }
                 }
-                mTexGenDirty = true;
             }
         }
     }
@@ -331,7 +343,11 @@ void GlobalState::SetXfData(u32 address, const u8* data, size_t wordCount) {
 }
 
 void GlobalState::SetTevColor(u8 reg, std::array<float, 4>& color) {
-    mInitialTevColors[reg] = color;
+    if(mInitialTevColors[reg] != color) {
+        mInitialTevColors[reg] = color;
+        mInitialTevColorsDirty = true;
+    }
+    
 }
 
 

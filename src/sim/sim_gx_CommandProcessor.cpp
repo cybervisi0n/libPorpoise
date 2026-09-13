@@ -507,8 +507,11 @@ void CommandProcessor::ProcessBpReg(u8 regAddr, u32 value) {
                 gxState.SetTlutAssignment(static_cast<GXTexMapID>(texMapId), tlutName);
 
                 auto& tlut = gxState.GetLoadedTlut(tlutName);
-                tlut.mFormat = static_cast<GXTlutFmt>(GetRegValue(value, 2, 10));
-                gxState.SetTextureDirty(true);
+                GXTlutFmt newFmt = static_cast<GXTlutFmt>(GetRegValue(value, 2, 10));
+                if(newFmt != tlut.mFormat) {
+                    tlut.mFormat = newFmt;
+                    gxState.SetTextureDirty(true);
+                }
             }
             break;
 
@@ -551,7 +554,6 @@ void CommandProcessor::ProcessBpReg(u8 regAddr, u32 value) {
                   s.mBias = static_cast<GXTevBias>(GetRegValue(value, 2, 16));
                   s.mScale = static_cast<GXTevScale>(GetRegValue(value, 2, 20));
                 }
-                gxState.SetTevDirty(true);
             } break;
         // TEV alpha combiner stages (0xC1, 0xC3, ... 0xDF)
         case 0xC1:
