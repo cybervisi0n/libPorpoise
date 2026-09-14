@@ -40,7 +40,7 @@ int MainThread(void * arg) {
 
         switch(msg.mType) {
             case ThreadMessageType::Fifo:
-                sCommandProcessor.ProcessFifoData(msg.mData, msg.mDataLen, std::endian::native);
+                sCommandProcessor.ProcessFifoData(msg.mFifo.fifoData, msg.mFifo.fifoDataLen, std::endian::native);
                 break;
             case ThreadMessageType::SetVertexArray:
                 {
@@ -97,10 +97,26 @@ int MainThread(void * arg) {
     return 0;
 }
 
+static u8 * sInternalFifoBuffer = nullptr; // These buffers will be allocated by the calling thread, and freed by GX commandprocessor
+static constexpr auto InternalFifoBufferSize = 600;
+static constexpr auto InternalFifoBufferSendThreshold = 512;
+static u32 sInternalFifoBufferPos = 0;
+
+void FlushFifoBuffer() {
+    if(sInternalFifoBufferPos > 0) {
+        ThreadMessage msg;
+        msg.mType = ThreadMessageType::Fifo;
+        msg.mFifo.fifoData = sInternalFifoBuffer;
+        msg.mFifo.fifoDataLen = sInternalFifoBufferPos;
+
+        sMessageQueue.SendMessage(msg);
+    }
+    sInternalFifoBufferPos = 0;
+    sInternalFifoBuffer = new u8[InternalFifoBufferSize];
+}
+
 template <typename T>
 void SendFifoMessage(T data) {
-    ThreadMessage msg;
-    msg.mType = ThreadMessageType::Fifo;
     size_t dataLen = sizeof(T);
 
     if(sInDisplayList) {
@@ -122,13 +138,24 @@ void SendFifoMessage(T data) {
         return;
     }
 
-    std::memcpy(msg.mData, &data, dataLen);
-    msg.mDataLen = dataLen;
-    #if COMMAND_PROCESSOR_DEBUG
-    sCommandProcessor.ProcessFifoData(msg.mData, msg.mDataLen, std::endian::native);
-    #else
-    sMessageQueue.SendMessage(msg);
-    #endif
+
+    // Add to the internal message buffer
+    if(sInternalFifoBuffer == nullptr) {
+        sInternalFifoBuffer = new u8[InternalFifoBufferSize];
+    }
+
+    std::memcpy(&sInternalFifoBuffer[sInternalFifoBufferPos], &data, dataLen);
+    sInternalFifoBufferPos+= dataLen;
+
+    if(sInternalFifoBufferPos >= InternalFifoBufferSendThreshold) {
+        FlushFifoBuffer();
+    }
+    //msg.mDataLen = dataLen;
+    //#if COMMAND_PROCESSOR_DEBUG
+    //sCommandProcessor.ProcessFifoData(msg.mData, msg.mDataLen, std::endian::native);
+    //#else
+    //sMessageQueue.SendMessage(msg);
+    //#endif
 }
 
 void SendThreadMessage(ThreadMessage& msg) {

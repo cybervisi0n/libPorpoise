@@ -16,6 +16,11 @@ enum class ThreadMessageType {
  Count
 };
 
+struct FifoMessage {
+    u8 * fifoData;
+    u32 fifoDataLen;
+};
+
 struct InitTexObjMessage {
     GXTexObj* obj;
     void * imagePtr;
@@ -37,6 +42,7 @@ struct ThreadMessage {
  ThreadMessageType mType;
  union {
     void * mPtr;
+    FifoMessage mFifo;
     VertexArray mVertexArray;
     InitTexObjMessage mInitTexObj;
     LoadTexObjMessage mLoadTexObj;
@@ -47,6 +53,7 @@ struct ThreadMessage {
 
 void Init();
 int MainThread(void * arg);
+void FlushFifoBuffer();
 template <typename T>
 void SendFifoMessage(T data);
 void SendThreadMessage(ThreadMessage& msg);

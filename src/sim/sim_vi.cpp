@@ -5,6 +5,8 @@
 #include "simulator/sim_vi.h"
 #include "dolphin/vi/vitypes.h"
 
+#include "simulator/sim_gx_Thread.hpp"
+
 namespace SIM::VI {
 
 static u32 s_waitForRetraceCount = 0;
