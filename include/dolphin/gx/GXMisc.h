@@ -74,6 +74,10 @@ extern u32 GXDecompressZ16(u32 z16, GXZFmt16 zFormat);
 
 struct OSThread* GXSetCurrentGXThread();
 
+#ifdef LIBPORPOISE_PORT
+u32 GXGetCurrentSDLThreadID(void);
+#endif
+
 ////////////////////////////////////////////
 
 END_SCOPE_EXTERN_C

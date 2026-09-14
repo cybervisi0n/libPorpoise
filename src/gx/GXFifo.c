@@ -3,6 +3,9 @@
 #include <dolphin/hw_regs.h>
 #include <dolphin/os.h>
 #include <stddef.h>
+#ifdef LIBPORPOISE_PORT
+#include <SDL2/SDL.h>
+#endif
 
 #if OS_BUILD_VERSION >= 20011002L
 static struct __GXFifoObj* CPUFifo;
@@ -10,6 +13,9 @@ static struct __GXFifoObj* GPFifo;
 #endif
 
 static OSThread* __GXCurrentThread;
+#ifdef LIBPORPOISE_PORT
+static u32 __GXCurrentSDLThreadID = 0;
+#endif
 static GXBool CPGPLinked;
 static BOOL GXOverflowSuspendInProgress;
 static GXBreakPtCallback BreakPointCB;
@@ -593,6 +599,9 @@ OSThread* GXSetCurrentGXThread(void)
 	prev    = __GXCurrentThread;
 	OSAssertMsgLine(0x532, !GXOverflowSuspendInProgress, "GXSetCurrentGXThread: Two threads cannot generate GX commands at the same time!");
 	__GXCurrentThread = OSGetCurrentThread();
+	#ifdef LIBPORPOISE_PORT
+	__GXCurrentSDLThreadID = SDL_GetThreadID(NULL);
+	#endif
 	OSRestoreInterrupts(enabled);
 	return prev;
 }
@@ -605,6 +614,12 @@ OSThread* GXGetCurrentGXThread(void)
 {
 	return __GXCurrentThread;
 }
+
+#ifdef LIBPORPOISE_PORT
+u32 GXGetCurrentSDLThreadID(void) {
+	return __GXCurrentSDLThreadID;
+}
+#endif
 
 /**
  * @TODO: Documentation
