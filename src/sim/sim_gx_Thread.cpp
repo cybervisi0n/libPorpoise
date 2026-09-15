@@ -3,6 +3,7 @@
 #include "simulator/sim.hpp"
 #include "simulator/sim_gx_Thread.hpp"
 #include "simulator/sim_gx_Thread.h"
+#include "simulator/sim_gx_GlRenderer.hpp"
 #include "simulator/sim_gx_CommandProcessor.hpp"
 #include "simulator/sim_gx_State.hpp"
 #include "simulator/sim_gx_TextureManager.hpp"
@@ -90,6 +91,10 @@ int MainThread(void * arg) {
                     SIM::AcquireRenderContext();
                 }
                 break;
+            case ThreadMessageType::FlushGlBuffer: {
+                auto& renderer = GetGlRenderer();
+                renderer.FlushRenderVerts();
+            } break;
             default:
                 break;
         }
@@ -111,9 +116,15 @@ void FlushFifoBuffer() {
         msg.mFifo.fifoDataLen = sInternalFifoBufferPos;
 
         sMessageQueue.SendMessage(msg);
+        sInternalFifoBufferPos = 0;
+        sInternalFifoBuffer = new u8[InternalFifoBufferSize];
     }
-    sInternalFifoBufferPos = 0;
-    sInternalFifoBuffer = new u8[InternalFifoBufferSize];
+}
+
+void FlushGlBuffer() {
+    ThreadMessage msg;
+    msg.mType = ThreadMessageType::FlushGlBuffer;
+    sMessageQueue.SendMessage(msg);
 }
 
 template <typename T>

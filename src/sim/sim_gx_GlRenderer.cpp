@@ -4,6 +4,7 @@
 #include <cstring>
 #include <format>
 #include <vector>
+#include <string.h>
 
 #include <simulator/glad/glad.h>
 #include <simulator/sim_gx_Geometry.hpp>
@@ -15,42 +16,7 @@
 
 namespace {
 
-
-const SIM::GX::RenderVertex * ExpandQuads(
-    const SIM::GX::RenderVertex * vertices, size_t numVertices) {
-    SIM::GX::RenderVertex * triangles = new SIM::GX::RenderVertex[(numVertices / 4) * 6];
-    size_t trianglesIdx = 0;
-    for (size_t i = 0; i + 3 < numVertices; i += 4) {
-        triangles[trianglesIdx++] = (vertices[i]);
-        triangles[trianglesIdx++] = (vertices[i + 1]);
-        triangles[trianglesIdx++] = (vertices[i + 2]);
-        triangles[trianglesIdx++] = (vertices[i]);
-        triangles[trianglesIdx++] = (vertices[i + 2]);
-        triangles[trianglesIdx++] = (vertices[i + 3]);
-    }
-    return triangles;
-}
-
-const SIM::GX::RenderVertex * ExpandQuadStrip(
-    const SIM::GX::RenderVertex * vertices, size_t numVertices) {
-    if (numVertices < 4) {
-        SIM::GX::RenderVertex * triangles = new SIM::GX::RenderVertex[numVertices];
-        std::memcpy(triangles, vertices, sizeof(SIM::GX::RenderVertex) * numVertices);
-        return triangles;
-    }
-
-    SIM::GX::RenderVertex * triangles = new SIM::GX::RenderVertex[((numVertices - 2) / 2) * 6];
-    size_t trianglesIdx = 0;
-    for (size_t i = 0; i + 3 < numVertices; i += 2) {
-        triangles[trianglesIdx++] = (vertices[i]);
-        triangles[trianglesIdx++] = (vertices[i + 1]);
-        triangles[trianglesIdx++] = (vertices[i + 2]);
-        triangles[trianglesIdx++] = (vertices[i]);
-        triangles[trianglesIdx++] = (vertices[i + 2]);
-        triangles[trianglesIdx++] = (vertices[i + 3]);
-    }
-    return triangles;
-}
+static constexpr auto InitialRenderVertsCapacity = 1024;
 
 GLenum ToGlPrimitive(GXPrimitive primitive) {
     switch (primitive) {
@@ -80,6 +46,10 @@ void GlRenderer::Initialize() {
     if (mVertexArray != 0) {
         return;
     }
+
+    mRenderVerts = new RenderVertex[InitialRenderVertsCapacity];
+    mRenderVertsCount = 0;
+    mRenderVertsCapacity = InitialRenderVertsCapacity;
 
     glGenVertexArrays(1, &mVertexArray);
     glGenBuffers(1, &mVertexBuffer);
@@ -244,22 +214,27 @@ void GlRenderer::Draw(const RenderVertex * vertices, size_t numVertices, GXPrimi
     }
     #endif
 
+    bool batchable = true;
+
     if(
-        !gxState.GetIsTextureDirty() &&
-        !gxState.GetIsDepthDirty() &&
-        !gxState.GetIsProjectionMatrixDirty() &&
-        !gxState.GetIsTexGenDirty() &&
-        !gxState.GetTevDirty() &&
-        !gxState.GetIsTevTexMapDirty() &&
-        !gxState.GetIsLightsDirty() &&
-        !gxState.GetIsPosTextureMtxDirty() &&
-        !gxState.GetIsNormalMtxDirty() && 
-        !gxState.GetIsNumChannelsDirty() &&
-        !gxState.GetIsNumTevStagesDirty() &&
-        !gxState.GetIsInitialTevColorsDirty() && 
-        !gxState.GetIsMatrixIndexDirty()
+        gxState.GetIsTextureDirty() ||
+        gxState.GetIsDepthDirty() ||
+        gxState.GetIsProjectionMatrixDirty() ||
+        gxState.GetIsTexGenDirty() ||
+        gxState.GetTevDirty() ||
+        gxState.GetIsTevTexMapDirty() ||
+        gxState.GetIsLightsDirty() ||
+        gxState.GetIsPosTextureMtxDirty() ||
+        gxState.GetIsNormalMtxDirty() ||
+        gxState.GetIsNumChannelsDirty() ||
+        gxState.GetIsNumTevStagesDirty() ||
+        gxState.GetIsInitialTevColorsDirty() ||
+        gxState.GetIsMatrixIndexDirty() ||
+        (ToGlPrimitive(primitive) != mRenderVertsPrimitive)
     ) {
-        mBatchableDrawcalls++;
+        // This Drawcall is not batchable. Flush mRenderVerts now
+        batchable = false;
+        FlushRenderVerts();
     }
 
     if(gxState.GetIsTextureDirty()) {
@@ -282,22 +257,22 @@ void GlRenderer::Draw(const RenderVertex * vertices, size_t numVertices, GXPrimi
         gxState.SetDepthDirty(false);
     }
 
-    const RenderVertex * expandedVertices;
-    const RenderVertex* drawVertices = vertices;
     size_t numDrawVertices = numVertices;
     if (primitive == GX_QUADS) {
-        expandedVertices = ExpandQuads(vertices, numVertices);
-        drawVertices = expandedVertices;
-        numDrawVertices = (numVertices / 4) * 6;
+        ExpandQuads(vertices, numVertices);
     } else if (primitive == GX_QUADSTRIP) {
-        expandedVertices = ExpandQuadStrip(vertices, numVertices);
-        drawVertices = expandedVertices;
-        numDrawVertices = ((numVertices - 2) / 2) * 6;
+        ExpandQuadStrip(vertices, numVertices);
+    } else {
+        ReserveRenderVerts(numVertices);
+        memcpy(&mRenderVerts[mRenderVertsCount], vertices, sizeof(RenderVertex) * numVertices);
+        mRenderVertsCount += numVertices;
     }
 
-    if (numDrawVertices == 0) {
+    if (numDrawVertices == 0 || batchable) {
         return;
     }
+
+    mRenderVertsPrimitive = ToGlPrimitive(primitive);
 
     //GLint shaderProgram = 0;
     //glGetIntegerv(GL_CURRENT_PROGRAM, &shaderProgram);
@@ -391,23 +366,94 @@ void GlRenderer::Draw(const RenderVertex * vertices, size_t numVertices, GXPrimi
         glUniform1ui(mNumTevStagesLocation, gxState.GetNumTevStages());
         gxState.SetNumTevStagesDirty(false);
     }
+}
 
+void GlRenderer::ExpandQuads(
+    const SIM::GX::RenderVertex * vertices, size_t numVertices) {
+    int numVertsOut = (numVertices / 4) * 6;
+    ReserveRenderVerts(numVertsOut);
+    SIM::GX::RenderVertex * triangles = &mRenderVerts[mRenderVertsCount];
+    size_t trianglesIdx = 0;
+    for (size_t i = 0; i + 3 < numVertices; i += 4) {
+        triangles[trianglesIdx++] = (vertices[i]);
+        triangles[trianglesIdx++] = (vertices[i + 1]);
+        triangles[trianglesIdx++] = (vertices[i + 2]);
+        triangles[trianglesIdx++] = (vertices[i]);
+        triangles[trianglesIdx++] = (vertices[i + 2]);
+        triangles[trianglesIdx++] = (vertices[i + 3]);
+    }
+    mRenderVertsCount += numVertsOut;
+}
 
+void GlRenderer::ExpandQuadStrip(
+    const SIM::GX::RenderVertex * vertices, size_t numVertices) {
+    if (numVertices < 4) {
+        ReserveRenderVerts(numVertices);
+        SIM::GX::RenderVertex * triangles = &mRenderVerts[mRenderVertsCount];
+        std::memcpy(triangles, vertices, sizeof(SIM::GX::RenderVertex) * numVertices);
+        mRenderVertsCount += numVertices;
+        return;
+    }
+
+    int numVertsOut = ((numVertices - 2) / 2) * 6;
+    ReserveRenderVerts(numVertsOut);
+
+    SIM::GX::RenderVertex * triangles = &mRenderVerts[mRenderVertsCount];
+    size_t trianglesIdx = 0;
+    for (size_t i = 0; i + 3 < numVertices; i += 2) {
+        triangles[trianglesIdx++] = (vertices[i]);
+        triangles[trianglesIdx++] = (vertices[i + 1]);
+        triangles[trianglesIdx++] = (vertices[i + 2]);
+        triangles[trianglesIdx++] = (vertices[i]);
+        triangles[trianglesIdx++] = (vertices[i + 2]);
+        triangles[trianglesIdx++] = (vertices[i + 3]);
+    }
+    mRenderVertsCount += numVertsOut;
+}
+
+void GlRenderer::ReserveRenderVerts(int numAdditionalVerts) {
+    if(mRenderVertsCount + numAdditionalVerts < mRenderVertsCapacity) {
+        return;
+    }
+
+    RenderVertex * renderVertsNew = new RenderVertex[mRenderVertsCount + numAdditionalVerts];
+    memcpy(renderVertsNew, mRenderVerts, sizeof(RenderVertex) * mRenderVertsCount);
+    delete mRenderVerts;
+    mRenderVerts = renderVertsNew;
+    mRenderVertsCapacity = mRenderVertsCount + numAdditionalVerts;
+}
+
+void GlRenderer::FlushRenderVerts() {
+    if(mRenderVertsCount == 0) {
+        return;
+    }
+    #ifdef TRACY_ENABLE
+    ZoneScoped;
+    #endif
     glBindVertexArray(mVertexArray);
     glBindBuffer(GL_ARRAY_BUFFER, mVertexBuffer);
-    glBufferData(
-        GL_ARRAY_BUFFER,
-        static_cast<GLsizeiptr>(numDrawVertices * sizeof(RenderVertex)),
-        drawVertices,
-        GL_STREAM_DRAW);
-    glDrawArrays(
-        ToGlPrimitive(primitive),
-        0,
-        static_cast<GLsizei>(numDrawVertices));
-
-    if (primitive == GX_QUADS || primitive == GX_QUADSTRIP) {
-        delete drawVertices;
+    if(mVboCapacity < mRenderVertsCount) {
+        glBufferData(
+            GL_ARRAY_BUFFER,
+            static_cast<GLsizeiptr>(mRenderVertsCount * sizeof(RenderVertex)),
+            mRenderVerts,
+            GL_STREAM_DRAW);
+        mVboCapacity = mRenderVertsCount;
+    } else {
+        glBufferSubData(
+            GL_ARRAY_BUFFER,
+            0,
+            static_cast<GLsizeiptr>(mRenderVertsCount * sizeof(RenderVertex)),
+            mRenderVerts
+        );
     }
+
+    glDrawArrays(
+        mRenderVertsPrimitive,
+        0,
+        static_cast<GLsizei>(mRenderVertsCount));
+    
+    mRenderVertsCount = 0;
 }
 
 GlRenderer& GetGlRenderer() {

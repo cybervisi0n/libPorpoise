@@ -9,6 +9,9 @@
 #include "simulator/sim_gx_GlRenderer.hpp"
 #include "simulator/sim_gx_State.hpp"
 #include "simulator/byteswap.h"
+#ifdef TRACY_ENABLE
+#include <tracy/Tracy.hpp>
+#endif
 
 namespace {
 
@@ -192,6 +195,10 @@ namespace SIM::GX {
 GeometryProcessor::GeometryProcessor() {}
 
 void GeometryProcessor::ProcessByteStream(std::vector<u8>& byteStream, std::endian endian) {
+    #ifdef TRACY_ENABLE
+    ZoneScoped;
+    #endif
+    
     auto& gxState = GetGlobalState();
     //mRenderVerts.clear();
 

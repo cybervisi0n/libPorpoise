@@ -8,6 +8,9 @@
 #include <simulator/sim.h>
 #include <simulator/byteswap.h>
 #include <simulator/sim_memory.hpp>
+#ifdef TRACY_ENABLE
+#include <tracy/Tracy.hpp>
+#endif
 
 static bool IsByteswapRequired(std::endian endian) {
     return (std::endian::native != endian);
@@ -21,6 +24,10 @@ CommandProcessor::CommandProcessor() : mGeometryProcessor(GeometryProcessor()),
 }
 
 void CommandProcessor::ProcessFifoData(u8 * data, size_t len, std::endian endian) {
+    #ifdef TRACY_ENABLE
+    ZoneScoped;
+    #endif
+    
     while(len > 0) {
 
         switch(mCurrentState) {

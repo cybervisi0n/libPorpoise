@@ -228,8 +228,15 @@ void MainLoop() {
 
         // Ensure GX is Done
         while(!SIM::GX::IsThreadDone()) {
+            // Tell GX to flush its buffer before waiting so that ideally
+            // we dont have any more data to flush after the delay
+            SIM::GX::FlushGlBuffer();
             SDL_Delay(1);
         }
+
+        // Flush any remaining GX state
+        SIM::GX::FlushFifoBuffer();
+        SIM::GX::FlushGlBuffer();
 
 
         //Call Pre Vblank Callback

@@ -5,6 +5,7 @@
 #include "simulator/sim_vi.h"
 #include "dolphin/vi/vitypes.h"
 
+#include "simulator/sim_gx_GlRenderer.hpp"
 #include "simulator/sim_gx_Thread.hpp"
 #include "dolphin/gx/GXMisc.h"
 #include <SDL2/SDL.h>
@@ -40,7 +41,8 @@ void HandlePostRetrace() {
 
 void WaitForRetrace() {
     if(SDL_GetThreadID(NULL) == GXGetCurrentSDLThreadID()) {
-        SIM::GX::FlushFifoBuffer();
+        GX::FlushFifoBuffer();
+        GX::FlushGlBuffer();
     }
     s_waitForRetraceCount++;
     SDL_mutex * dummy = SDL_CreateMutex();

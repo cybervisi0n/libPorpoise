@@ -13,6 +13,7 @@ enum class ThreadMessageType {
  InitTexObj,
  LoadTexObj,
  TakeRenderContext,
+ FlushGlBuffer,
  Count
 };
 
@@ -60,6 +61,7 @@ void SendThreadMessage(ThreadMessage& msg);
 bool IsThreadDone();
 void TakeRenderContext();
 void GiveRenderContext();
+void FlushGlBuffer();
 
 }
 

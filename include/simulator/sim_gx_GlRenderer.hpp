@@ -13,6 +13,7 @@ struct RenderVertex;
 class GlRenderer {
  public:
   void Draw(const RenderVertex * vertices, size_t numVertices, GXPrimitive primitive);
+  void FlushRenderVerts();
 
   inline int GetBatchableDrawcalls() {return mBatchableDrawcalls; };
   inline void ResetBatchableDrawcalls() {mBatchableDrawcalls = 0; };
@@ -22,12 +23,20 @@ class GlRenderer {
 
  private:
   void Initialize();
+  void ReserveRenderVerts(int numAdditionalVerts);
+  void ExpandQuads(const SIM::GX::RenderVertex * vertices, size_t numVertices);
+  void ExpandQuadStrip(const SIM::GX::RenderVertex * vertices, size_t numVertices);
 
   unsigned int mVertexArray = 0;
   unsigned int mVertexBuffer = 0;
   unsigned int mTevStageUniformBuffer = 0;
   unsigned int mLightsUniformBuffer = 0;
   unsigned int mMatrixMemoryUniformBuffer = 0;
+
+  RenderVertex * mRenderVerts = nullptr;
+  int mRenderVertsPrimitive;
+  size_t mRenderVertsCount = 0;
+  size_t mRenderVertsCapacity = 0;
 
   // Shader Uniform locations
   int mProjectionLocation;
@@ -47,6 +56,7 @@ class GlRenderer {
   int mNumChansLocation;
   int mMtxIdxALocation;
   int mPnMtxIdxEnabledLocation;
+  int mVboCapacity = 0;
 
 
   int mBatchableDrawcalls = 0;
