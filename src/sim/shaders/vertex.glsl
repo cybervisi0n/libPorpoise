@@ -55,7 +55,7 @@ layout (std140) uniform matrixMemoryBlock {
     0x400: start of normal matrices (3x3)
     */
     uniform vec4 u_posTextureMatrixMemory[60];
-    uniform vec3 u_normalMatrixMemory[30];
+    uniform vec4 u_normalMatrixMemory[30];
 };
 
 smooth out vec3 rasc;
@@ -105,9 +105,9 @@ mat3 GetNormalMatrix(uint row) {
         return mat3(1.0);
     }
 
-    vec3 r0 = u_normalMatrixMemory[row];
-    vec3 r1 = u_normalMatrixMemory[row+1u];
-    vec3 r2 = u_normalMatrixMemory[row+2u];
+    vec3 r0 = u_normalMatrixMemory[row].xyz;
+    vec3 r1 = u_normalMatrixMemory[row+1u].xyz;
+    vec3 r2 = u_normalMatrixMemory[row+2u].xyz;
 
     // GLSL constructor arguments are columns.
     return mat3(

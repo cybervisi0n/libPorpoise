@@ -687,7 +687,7 @@ void TextureManager::ProcessTextures() {
         }
 
         tempTexture.mWrapS = static_cast<GXTexWrapMode>(GET_REG_FIELD(texObj.mode0, 2, 0));
-        tempTexture.mWrapT = static_cast<GXTexWrapMode>(GET_REG_FIELD(texObj.mode0, 2, 0));
+        tempTexture.mWrapT = static_cast<GXTexWrapMode>(GET_REG_FIELD(texObj.mode0, 2, 2));
         tempTexture.mWidth = GET_REG_FIELD(texObj.image0, 10, 0) + 1;
         tempTexture.mHeight = GET_REG_FIELD(texObj.image0, 10, 10) + 1;
         tempTexture.mSourceFormat = static_cast<GXTexFmt>(GET_REG_FIELD(texObj.image0, 4, 20));
@@ -695,6 +695,7 @@ void TextureManager::ProcessTextures() {
         auto sourceBufSize = tempTexture.GetSourceBufSize();
         sourceBufSize = std::min<size_t>(sourceBufSize, 10240);
         u32 textureCRC = SIM_crc32buf(tempTexture.mSourceData, sourceBufSize);
+        //TODO: tlut crc
 
         // Check if the converted texture data is in the cache
         if(mTextureCache.count(textureCRC) > 0) {
