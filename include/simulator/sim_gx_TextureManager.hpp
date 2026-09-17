@@ -26,6 +26,7 @@ class Texture {
   inline void SetWrapT(GXTexWrapMode wrapT) {mWrapT = wrapT;}
 
   void GenGlTexture();
+  void RefreshAttributes();
   void DeleteGlTexture();
   
   void Activate(GXTexMapID mapId);
@@ -55,7 +56,7 @@ class TextureManager {
   
   // Converted texture data is hashed by the CRC of the
   // source texture data
-  std::unordered_map<u32, Texture> mTextureCache;
+  std::unordered_map<u64, Texture> mTextureCache;
   
 };
 

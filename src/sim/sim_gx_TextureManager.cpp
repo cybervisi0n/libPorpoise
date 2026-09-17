@@ -626,10 +626,23 @@ void Texture::ConvertToGl(GXTexMapID mapId) {
     glBindTexture(GL_TEXTURE_2D, mGlTextureId);
     int error = glGetError();
 
+    RefreshAttributes();
+
     //if(error != GL_NO_ERROR) {
     //    OSReport("TextureManager: glBindTexture error %d\n", error);
     //}
 
+    glTexImage2D(GL_TEXTURE_2D, 0, outputGlInternalFormat, mWidth, mHeight, 0, outputFormat, outputType, mTextureBuf);
+    
+    error = glGetError();
+
+    if(error != GL_NO_ERROR) {
+        OSReport("TextureManager: glTexImage2D error %d\n", error);
+    }
+}
+
+void Texture::RefreshAttributes() {
+    glBindTexture(GL_TEXTURE_2D, mGlTextureId);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
@@ -647,14 +660,6 @@ void Texture::ConvertToGl(GXTexMapID mapId) {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     } else {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);  
-    }
-
-    glTexImage2D(GL_TEXTURE_2D, 0, outputGlInternalFormat, mWidth, mHeight, 0, outputFormat, outputType, mTextureBuf);
-    
-    error = glGetError();
-
-    if(error != GL_NO_ERROR) {
-        OSReport("TextureManager: glTexImage2D error %d\n", error);
     }
 }
 
@@ -695,19 +700,47 @@ void TextureManager::ProcessTextures() {
         auto sourceBufSize = tempTexture.GetSourceBufSize();
         sourceBufSize = std::min<size_t>(sourceBufSize, 10240);
         u32 textureCRC = SIM_crc32buf(tempTexture.mSourceData, sourceBufSize);
-        //TODO: tlut crc
+
+        //tlut crc
+        u32 tlutCRC = 0;
+        if(tempTexture.mSourceFormat == GX_TF_C4 || tempTexture.mSourceFormat == GX_TF_C8) {
+            u32 tlutName = gxState.GetTlutAssignment(static_cast<GXTexMapID>(texMap));
+            if(tlutName < GX_MAX_TLUT_ALL) {
+                auto& tlut = gxState.GetLoadedTlut(tlutName);
+                u16 * tlutPtr = (u16*)tlut.mSourceAddress;
+                tlutCRC = SIM_crc32buf((u8*)tlut.mSourceAddress, sizeof(u16) * tlut.mNumEntries);
+            }
+        }
+
+        u64 fullCRC = (((u64)tlutCRC) << 32) | (u64)textureCRC;
 
         // Check if the converted texture data is in the cache
-        if(mTextureCache.count(textureCRC) > 0) {
+        if(mTextureCache.count(fullCRC) > 0) {
             // Just bind the texture
-            auto& texture = mTextureCache[textureCRC];
+            auto& texture = mTextureCache[fullCRC];
+
+            // Refresh attributes based on tempTexture
+            bool changed = false;
+            if(texture.mWrapS != tempTexture.mWrapS) {
+                texture.mWrapS = tempTexture.mWrapS;
+                changed = true;
+            }
+
+            if(texture.mWrapT != tempTexture.mWrapT) {
+                texture.mWrapT = tempTexture.mWrapT;
+                changed = true;
+            }
+
+            if(changed) {
+                texture.RefreshAttributes();
+            }
 
             texture.Activate(static_cast<GXTexMapID>(texMap));
         } else {
             // Convert the texture and then bind
             tempTexture.GenGlTexture();
             tempTexture.ConvertToGl(static_cast<GXTexMapID>(texMap));
-            mTextureCache[textureCRC] = tempTexture;
+            mTextureCache[fullCRC] = tempTexture;
             tempTexture.Activate(static_cast<GXTexMapID>(texMap));
         }
     }

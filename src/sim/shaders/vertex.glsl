@@ -354,18 +354,16 @@ void main()
     if(pnMtxIdxEnabled > 0u) {
         modelViewRow = posNormalMtxIdx;
     } else {
-        modelViewRow = mtxIdxA * 3u;
+        modelViewRow = mtxIdxA;
     }
     mat4 modelView = GetPositionMatrix(modelViewRow);
     gl_Position = u_projection * modelView * vec4(position, 1.0);
 
-    calculatedNormal = normal * GetNormalMatrix(modelViewRow);
+    calculatedNormal = normalize(GetNormalMatrix(modelViewRow) * normal);
 
-    //calculatedNormal = (vec4(normal.x, normal.y, normal.z, 0.0) * u_normalMtx[posNormalMtxIdx]).xyz;
-
-    if(dot(calculatedNormal, calculatedNormal) > 1e-10) {
-        calculatedNormal = normalize(calculatedNormal);
-    }
+    //if(dot(calculatedNormal, calculatedNormal) > 1e-10) {
+    //    calculatedNormal = normalize(calculatedNormal);
+    //}
 
     rasc = vec3(0.0);
     rasa = 0.0;

@@ -193,7 +193,7 @@ class GlobalState {
   }
   inline void SetCurrentPrimitive(GXPrimitive primitive) {mCurrentPrimitive = primitive;};
   inline void SetCurrentPositionMatrix(u32 matrixId) {
-    const size_t slot = static_cast<size_t>(matrixId / 3);
+    const size_t slot = static_cast<size_t>(matrixId);
     if ((slot < mPositionMatrices.size()) && (slot != mCurrentPositionMatrix)) {
         mCurrentPositionMatrix = slot;
         mMatrixIndexDirty = true;

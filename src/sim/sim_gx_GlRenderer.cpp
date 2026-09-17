@@ -135,7 +135,7 @@ void GlRenderer::Initialize() {
     // Allocate matrix memory uniform buffer
     glGenBuffers(1, &mMatrixMemoryUniformBuffer);
     glBindBuffer(GL_UNIFORM_BUFFER, mMatrixMemoryUniformBuffer);
-    glBufferData(GL_UNIFORM_BUFFER, (sizeof(float) * 240) + (sizeof(float) * 90), NULL, GL_DYNAMIC_DRAW);
+    glBufferData(GL_UNIFORM_BUFFER, (sizeof(float) * 240) + (sizeof(float) * 120), NULL, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     glEnable(GL_BLEND);
@@ -317,10 +317,11 @@ void GlRenderer::Draw(const RenderVertex * vertices, size_t numVertices, GXPrimi
     }
 
     //upload matrix memory position + texture
-    if(gxState.GetIsPosTextureMtxDirty()) {
+    if(gxState.GetIsPosTextureMtxDirty() || gxState.GetIsNormalMtxDirty()) {
         glBindBuffer(GL_UNIFORM_BUFFER, mMatrixMemoryUniformBuffer);
         const float * matrixMem = gxState.GetXfMemoryPointer();
         glBufferSubData(GL_UNIFORM_BUFFER, 0, 240 * sizeof(float), gxState.GetXfMemoryPointer());
+        glBindBufferBase(GL_UNIFORM_BUFFER, mMatrixMemoryBlockBinding, mMatrixMemoryUniformBuffer);
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
         gxState.SetPosTextureMtxDirty(false);
     }
@@ -328,8 +329,19 @@ void GlRenderer::Draw(const RenderVertex * vertices, size_t numVertices, GXPrimi
     if(gxState.GetIsNormalMtxDirty()) {
         // upload matrix memory normal mtx
         glBindBuffer(GL_UNIFORM_BUFFER, mMatrixMemoryUniformBuffer);
-        const float * matrixMem = gxState.GetXfMemoryPointer();
-        glBufferSubData(GL_UNIFORM_BUFFER, 240 * sizeof(float), 90 * sizeof(float), gxState.GetXfMemoryPointer() + 0x400);
+        const float * matrixMem = gxState.GetXfMemoryPointer() + 0x400;
+        float normalMatrices[30][4] = {};
+        for(int i=0; i < 30; i++) {
+            normalMatrices[i][0] = matrixMem[(3*i)];
+            normalMatrices[i][1] = matrixMem[(3*i) + 1];
+            normalMatrices[i][2] = matrixMem[(3*i) + 2];
+            normalMatrices[i][3] = 0.0f;
+        }
+        glBufferSubData(GL_UNIFORM_BUFFER, 240 * sizeof(float), sizeof(normalMatrices), normalMatrices);
+        //int glError = glGetError();
+        //if(glError != GL_NO_ERROR) {
+        //    printf("Error sending normal matrix data %d\n", glError);
+        //}
         glBindBufferBase(GL_UNIFORM_BUFFER, mMatrixMemoryBlockBinding, mMatrixMemoryUniformBuffer);
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
         gxState.SetNormalMtxDirty(false);
