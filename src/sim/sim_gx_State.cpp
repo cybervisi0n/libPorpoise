@@ -313,7 +313,7 @@ void GlobalState::SetXfData(u32 address, const u8* data, size_t wordCount) {
                 auto& texGenConfig = mTexGenConfigs[texGenIdx];
                 bool proj = GetRegValue(value, 1, 1) != 0;
                 u32 tgType = GetRegValue(value, 3, 4);
-                u32 srcRow = GetRegValue(value, 5, 7);
+                //u32 srcRow = GetRegValue(value, 5, 7);
             
                 if (tgType == 0) {
                   GXTexGenType newType = proj ? GX_TG_MTX3x4 : GX_TG_MTX2x4;
@@ -361,14 +361,14 @@ void GlobalState::RefreshPositionMatrices(u32 firstAddress, u32 endAddress) {
             continue;
         }
 
-        auto& matrix = mPositionMatrices[slot];
-        matrix = IdentityMatrix();
-        for (size_t row = 0; row < 3; ++row) {
-            for (size_t column = 0; column < 4; ++column) {
-                const size_t source = matrixStart + row * 4 + column;
-                matrix[row * 4 + column] = WordToFloat(mXfMemory[source]);
-            }
-        }
+        //auto& matrix = mPositionMatrices[slot];
+        //matrix = IdentityMatrix();
+        //for (size_t row = 0; row < 3; ++row) {
+        //    for (size_t column = 0; column < 4; ++column) {
+        //        const size_t source = matrixStart + row * 4 + column;
+        //        matrix[row * 4 + column] = WordToFloat(mXfMemory[source]);
+        //    }
+        //}
         mPositionMatrixValid[slot] = true;
         mPosTextureMtxDirty = true;
     }
@@ -383,14 +383,14 @@ void GlobalState::RefreshNormalMatrices(u32 firstAddress, u32 endAddress) {
             continue;
         }
 
-        auto& matrix = mNormalMatrices[slot];
-        matrix = IdentityMatrix();
-        for (size_t row = 0; row < 3; ++row) {
-            for (size_t column = 0; column < 3; ++column) {
-                const size_t source = matrixStart + row * 3 + column;
-                matrix[row * 4 + column] = WordToFloat(mXfMemory[source]);
-            }
-        }
+        //auto& matrix = mNormalMatrices[slot];
+        //matrix = IdentityMatrix();
+        //for (size_t row = 0; row < 3; ++row) {
+        //    for (size_t column = 0; column < 3; ++column) {
+        //        const size_t source = matrixStart + row * 3 + column;
+        //        matrix[row * 4 + column] = WordToFloat(mXfMemory[source]);
+        //    }
+        //}
         mNormalMatrixValid[slot] = true;
         mNormalMtxDirty = true;
     }
@@ -405,14 +405,14 @@ void GlobalState::RefreshTextureMatrices(u32 firstAddress, u32 endAddress) {
             continue;
         }
 
-        auto& matrix = mTextureMatrices[slot];
-        matrix = IdentityMatrix();
-        for (size_t row = 0; row < 3; ++row) {
-            for (size_t column = 0; column < 4; ++column) {
-                const size_t source = matrixStart + row * 4 + column;
-                matrix[row * 4 + column] = WordToFloat(mXfMemory[source]);
-            }
-        }
+        //auto& matrix = mTextureMatrices[slot];
+        //matrix = IdentityMatrix();
+        //for (size_t row = 0; row < 3; ++row) {
+        //    for (size_t column = 0; column < 4; ++column) {
+        //        const size_t source = matrixStart + row * 4 + column;
+        //        matrix[row * 4 + column] = WordToFloat(mXfMemory[source]);
+        //    }
+        //}
         mTextureMatrixValid[slot] = true;
         mPosTextureMtxDirty = true;
     }

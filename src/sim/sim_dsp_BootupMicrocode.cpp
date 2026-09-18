@@ -65,6 +65,9 @@ void BootupMicrocode::ReceiveMail(u32 mail) {
             mCurrentState = State::Ready;
             SetMailboxFull();
             break;
+        default:
+            // Unhandled state
+            break;
     }
 
     // Once all values have been set, upload the new Microcode

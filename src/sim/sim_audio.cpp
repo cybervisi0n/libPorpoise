@@ -69,7 +69,7 @@ void SDLCallback(void *userdata, u8 *stream, int len) {
     SIM::AI::StereoFrame * outputFrames = (SIM::AI::StereoFrame *)stream;
 
 
-    u32 num = SIM::AI::ConsumeAudio(frames, outputFrames);
+    SIM::AI::ConsumeAudio(frames, outputFrames);
 }
 
 }

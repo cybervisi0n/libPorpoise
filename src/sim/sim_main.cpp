@@ -99,28 +99,6 @@ static bool LinkShader(GLuint id,GLuint vertex,GLuint fragment) {
     return true;
 }
 
-static void DrawTestTriangle()
-{
-    glBindVertexArray(gxVertexArray);
-    glBindBuffer(GL_ARRAY_BUFFER, gxVertexBuffer);
-
-
-    float verts[] = {
-        0.0f, 0.0f, 0.0f,   // Vertex A : bottom‑left
-        1.0f, 0.0f, 0.0f,   // Vertex B : bottom‑right
-        0.5f, 1.0f, 0.0f   // Vertex C : top‑center
-    };
-
-    glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
-
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 12, (void*)0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 12, (void*)0);
-
-    glDrawArrays(GL_TRIANGLES,0, sizeof(verts) / sizeof(float));
-}
-
 
 static GLuint gxShaderProgramId;
 static GLuint gxVertexShader;
@@ -302,8 +280,8 @@ int main(int argc, char** argv) {
     auto* dvdId = DVDGetCurrentDiskID();
     char gameId[5] = {0};
     char dvdCompany[3] = {0};
-    strncpy(gameId, dvdId->gameName, sizeof(dvdId->gameName));
-    strncpy(dvdCompany, dvdId->company, sizeof(dvdId->company));
+    strncpy(gameId, dvdId->gameName, 4);
+    strncpy(dvdCompany, dvdId->company, 2);
     std::string windowTitle = std::format("libPorpoise Application [{}{}]", gameId, dvdCompany);
 
     window = SDL_CreateWindow( windowTitle.c_str(), 100, 100, windowWidth, windowHeight, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE );
@@ -391,7 +369,6 @@ void SIM_Render() {
         }
     }
 
-    //DrawTestTriangle();
     SDL_GL_SwapWindow(window);
 
     #ifdef TRACY_ENABLE

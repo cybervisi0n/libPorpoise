@@ -8,7 +8,6 @@
 
 #ifdef LIBPORPOISE_BUILD_WIN
 #define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
 #include <windows.h>
 #endif
 
@@ -34,7 +33,7 @@ void Init() {
         IMAGE_DOS_HEADER* dos = (IMAGE_DOS_HEADER*)exe;
         IMAGE_NT_HEADERS* nt = (IMAGE_NT_HEADERS*)((char*)exe + dos->e_lfanew);
         sExeImageStart = (void*)(uintptr_t)exe;
-        sExeImageEnd = sExeImageStart + nt->OptionalHeader.SizeOfImage;
+        sExeImageEnd = (void*)((uintptr_t)sExeImageStart + (uintptr_t)nt->OptionalHeader.SizeOfImage);
     }
 #else
     {

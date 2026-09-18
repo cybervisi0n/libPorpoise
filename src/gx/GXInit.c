@@ -53,7 +53,10 @@ static void DisableWriteGatherPipe(void)
 /**
  * @TODO: Documentation
  */
-static GXTexRegion* __GXDefaultTexRegionCallback(GXTexObj* t_obj, GXTexMapID unused)
+#ifndef LIBPORPOISE_PORT
+static 
+#endif
+GXTexRegion* __GXDefaultTexRegionCallback(GXTexObj* t_obj, GXTexMapID unused)
 {
 	GXTexFmt fmt = GXGetTexObjFmt(t_obj);
 
@@ -67,7 +70,10 @@ static GXTexRegion* __GXDefaultTexRegionCallback(GXTexObj* t_obj, GXTexMapID unu
 /**
  * @TODO: Documentation
  */
-static GXTlutRegion* __GXDefaultTlutRegionCallback(u32 idx)
+#ifndef LIBPORPOISE_PORT
+static 
+#endif
+GXTlutRegion* __GXDefaultTlutRegionCallback(u32 idx)
 {
 	if (idx >= 0x14U) {
 		return NULL;

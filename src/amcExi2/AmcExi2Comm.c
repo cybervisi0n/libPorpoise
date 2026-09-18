@@ -157,7 +157,9 @@ int EXI2_Poll(void)
 {
 	u32 bufAddr;
 	u32 bufAddr2;
+	#ifndef LIBPORPOISE_PORT
 	u32 stackPad;
+	#endif
 
 	if (!(__PIRegs[PI_INTRPT_SRC] & PI_INTRPT_DEBUG) && (*pucEXI2InputPending == 0)) {
 		bufAddr = 0;
@@ -236,7 +238,9 @@ AmcExiError EXI2_WriteN(const void* src, u32 len)
 	u32 bufAddr;
 	s32 res;
 	u32 i;
+	#ifndef LIBPORPOISE_PORT
 	u32 unusedStack;
+	#endif
 	u32* inputWords = (u32*)src;
 	u32 max;
 

@@ -544,7 +544,7 @@ void Texture::ConvertToGl(GXTexMapID mapId) {
 
     void (*conversionFunc)(u8*, u8*, u16, u16, GXTexMapID) = nullptr;
 
-    switch(mSourceFormat) {
+    switch((s32)mSourceFormat) {
         case GX_TF_I4:
             // This is a special case since there are two pixels per byte
             conversionFunc = ConvertI4;
@@ -677,7 +677,7 @@ void TextureManager::ProcessTextures() {
     auto& gxState = GetGlobalState();
     for(int texMap = 0; texMap < GX_MAX_TEXMAP; texMap++) {
         auto& texObj = gxState.GetLoadedTexObj(texMap);
-        auto& texRegion = gxState.GetLoadedTexRegion(texMap);
+        //auto& texRegion = gxState.GetLoadedTexRegion(texMap);
 
         Texture tempTexture;
 
@@ -703,11 +703,11 @@ void TextureManager::ProcessTextures() {
 
         //tlut crc
         u32 tlutCRC = 0;
-        if(tempTexture.mSourceFormat == GX_TF_C4 || tempTexture.mSourceFormat == GX_TF_C8) {
+        if((s32)tempTexture.mSourceFormat == GX_TF_C4 || (s32)tempTexture.mSourceFormat == GX_TF_C8) {
             u32 tlutName = gxState.GetTlutAssignment(static_cast<GXTexMapID>(texMap));
             if(tlutName < GX_MAX_TLUT_ALL) {
                 auto& tlut = gxState.GetLoadedTlut(tlutName);
-                u16 * tlutPtr = (u16*)tlut.mSourceAddress;
+                //u16 * tlutPtr = (u16*)tlut.mSourceAddress;
                 tlutCRC = SIM_crc32buf((u8*)tlut.mSourceAddress, sizeof(u16) * tlut.mNumEntries);
             }
         }

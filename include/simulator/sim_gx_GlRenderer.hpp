@@ -56,7 +56,7 @@ class GlRenderer {
   int mNumChansLocation;
   int mMtxIdxALocation;
   int mPnMtxIdxEnabledLocation;
-  int mVboCapacity = 0;
+  size_t mVboCapacity = 0;
 
 
   int mBatchableDrawcalls = 0;

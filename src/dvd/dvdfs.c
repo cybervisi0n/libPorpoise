@@ -15,7 +15,9 @@ struct FSTEntry {
 	uint nextEntryOrLength;
 };
 
+#ifndef LIBPORPOISE_PORT
 static OSBootInfo* BootInfo;
+#endif
 static FSTEntry* FstStart;
 static char* FstStringStart;
 static u32 MaxEntryNum;
@@ -23,10 +25,14 @@ static u32 currentDirectory = 0;
 OSThreadQueue __DVDThreadQueue;
 u32 __DVDLongFileNameFlag = FALSE;
 
+#ifndef LIBPORPOISE_PORT
 static void cbForReadAsync(s32 result, DVDCommandBlock* block);
 static void cbForReadSync(s32 result, DVDCommandBlock* block);
+#endif
 static void cbForSeekAsync(s32 result, DVDCommandBlock* block);
+#ifndef LIBPORPOISE_PORT
 static void cbForSeekSync(s32 result, DVDCommandBlock* block);
+#endif
 static void cbForPrepareStreamAsync(s32 result, DVDCommandBlock* block);
 static void cbForPrepareStreamSync(s32 result, DVDCommandBlock* block);
 
@@ -65,6 +71,7 @@ void __DVDFSInit()
  * @TODO: Documentation
  * @note UNUSED Size: 00009C (Matching by size)
  */
+#ifndef LIBPORPOISE_PORT
 static BOOL isSame(const char* path, const char* string)
 {
 	while (*string != '\0') {
@@ -78,6 +85,7 @@ static BOOL isSame(const char* path, const char* string)
 	}
 	return FALSE;
 }
+#endif
 
 /**
  * @TODO: Documentation
@@ -418,7 +426,7 @@ BOOL DVDReadAsyncPrio(DVDFileInfo* fileInfo, void* addr, s32 length, s32 offset,
 #ifdef LIBPORPOISE_PORT
 	fileInfo->callback = callback;
 	s32 bytesRead = 0;
-	s32 result = DVD_RESULT_GOOD;
+	//s32 result = DVD_RESULT_GOOD;
 	if(fileInfo->pcFilePtr) {
 		fseek(fileInfo->pcFilePtr, offset, SEEK_SET);
 		bytesRead = fread(addr, 1, length, fileInfo->pcFilePtr);
@@ -426,7 +434,7 @@ BOOL DVDReadAsyncPrio(DVDFileInfo* fileInfo, void* addr, s32 length, s32 offset,
 
 	if(bytesRead == 0) {
 		// Failed to read data
-		result = DVD_RESULT_FATAL_ERROR;
+		//result = DVD_RESULT_FATAL_ERROR;
 	}
 
 	if (fileInfo->callback) {
@@ -461,6 +469,7 @@ BOOL DVDReadAsyncPrio(DVDFileInfo* fileInfo, void* addr, s32 length, s32 offset,
 /**
  * @TODO: Documentation
  */
+#ifndef LIBPORPOISE_PORT
 static void cbForReadAsync(s32 result, DVDCommandBlock* block)
 {
 	DVDFileInfo* fileInfo;
@@ -470,6 +479,7 @@ static void cbForReadAsync(s32 result, DVDCommandBlock* block)
 		(fileInfo->callback)(result, fileInfo);
 	}
 }
+#endif
 
 /**
  * @TODO: Documentation
@@ -544,10 +554,12 @@ s32 DVDReadPrio(DVDFileInfo* fileInfo, void* addr, s32 length, s32 offset, s32 p
 /**
  * @TODO: Documentation
  */
+#ifndef LIBPORPOISE_PORT
 static void cbForReadSync(s32 result, DVDCommandBlock* block)
 {
 	OSWakeupThread(&__DVDThreadQueue);
 }
+#endif
 
 /**
  * @TODO: Documentation
@@ -580,16 +592,19 @@ static void cbForSeekAsync(s32 result, DVDCommandBlock* block)
 s32 DVDSeekPrio(DVDFileInfo* fileInfo, s32 offset, s32 prio)
 {
 	TRAP_UNIMPLEMENTED;
+	return 0;
 }
 
 /**
  * @TODO: Documentation
  * @note UNUSED Size: 000024
  */
+#ifndef LIBPORPOISE_PORT
 static void cbForSeekSync(s32 result, DVDCommandBlock* block)
 {
 	TRAP_UNIMPLEMENTED;
 }
+#endif
 
 /**
  * @TODO: Documentation
@@ -598,6 +613,7 @@ static void cbForSeekSync(s32 result, DVDCommandBlock* block)
 s32 DVDGetFileInfoStatus(DVDFileInfo* fileInfo)
 {
 	TRAP_UNIMPLEMENTED;
+	return 0;
 }
 
 /**
@@ -638,6 +654,7 @@ BOOL DVDOpenDir(const char* dirName, DVDDir* dir)
 BOOL DVDReadDir(DVDDir* dir, DVDDirEntry* dirent)
 {
 	TRAP_UNIMPLEMENTED;
+	return FALSE;
 }
 
 /**
@@ -647,6 +664,7 @@ BOOL DVDReadDir(DVDDir* dir, DVDDirEntry* dirent)
 BOOL DVDCloseDir(DVDDir* dir)
 {
 	TRAP_UNIMPLEMENTED;
+	return FALSE;
 }
 
 /**
@@ -656,6 +674,7 @@ BOOL DVDCloseDir(DVDDir* dir)
 void* DVDGetFSTLocation()
 {
 	TRAP_UNIMPLEMENTED;
+	return NULL;
 }
 
 #define RoundUp32KB(x)   (((u32)(x) + 32 * 1024 - 1) & ~(32 * 1024 - 1))

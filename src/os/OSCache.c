@@ -470,6 +470,7 @@ void LCAllocNoInvalidate(void)
 u32 LCLoadData(void* destAddr, void* srcAddr, u32 nBytes)
 {
 	TRAP_UNIMPLEMENTED;
+	return 0;
 }
 
 /**
@@ -479,6 +480,7 @@ u32 LCLoadData(void* destAddr, void* srcAddr, u32 nBytes)
 u32 LCStoreData(void* destAddr, void* srcAddr, u32 nBytes)
 {
 	TRAP_UNIMPLEMENTED;
+	return 0;
 }
 
 /**
@@ -488,6 +490,7 @@ u32 LCStoreData(void* destAddr, void* srcAddr, u32 nBytes)
 u32 LCQueueLength(void)
 {
 	TRAP_UNIMPLEMENTED;
+	return 0;
 }
 
 /**

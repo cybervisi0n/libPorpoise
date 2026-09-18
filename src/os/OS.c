@@ -121,6 +121,7 @@ u32 OSGetConsoleType(void)
 void ClearArena()
 {
 	void *start, *end;
+	return;
 	if ((u32)(OSGetResetCode() + 0x80000000) != 0U) {
 		memset(OSGetArenaLo(), 0U, (char*)OSGetArenaHi() - (char*)OSGetArenaLo());
 		return;
@@ -219,21 +220,30 @@ void OSInit(void)
 		// HEAP //
 		// set up bottom of heap (ArenaLo)
 		// grab address from BootInfo if it exists, otherwise use default __ArenaLo
+		#ifdef LIBPORPOISE_PORT
+		extern u8 s_SIM_main_mem_buf[24 *1024 * 1024];
+		OSSetArenaLo(&s_SIM_main_mem_buf[0]);
+		#else
 		OSSetArenaLo((BootInfo->arenaLo == NULL) ? (void*)(__ArenaLo) : BootInfo->arenaLo);
+		#endif
 
 		// if the input arenaLo is null, and debug flag location exists (and flag is < 2),
 		//     set arenaLo to just past the end of the db stack
+		#ifndef LIBPORPOISE_PORT
 		if ((BootInfo->arenaLo == NULL) && (BI2DebugFlag != 0) && (*BI2DebugFlag < 2)) {
-			#ifndef LIBPORPOISE_PORT
-			//TODO
 			debugArenaLo = (void*)_stack_addr;
-			#endif
 			OSSetArenaLo((void*)ALIGN_NEXT((u32)debugArenaLo, 32));
+						
 		}
+		#endif
 
 		// set up top of heap (ArenaHi)
 		// grab address from BootInfo if it exists, otherwise use default __ArenaHi
+		#ifdef LIBPORPOISE_PORT
+		OSSetArenaHi(&s_SIM_main_mem_buf[24 * 1024 * 1024]);
+		#else
 		OSSetArenaHi((BootInfo->arenaHi == NULL) ? __ArenaHi : BootInfo->arenaHi);
+		#endif
 
 		// OS INIT AND REPORT //
 		// initialise a whole bunch of OS stuff
@@ -373,6 +383,7 @@ static void OSExceptionInit(void)
 	void* destAddr;
 
 	// These two vars help us change the exception number embedded in the exception handler code.
+	#ifndef LIBPORPOISE_PORR
 	u32* opCodeAddr;
 	u32 oldOpCode;
 
@@ -385,6 +396,7 @@ static void OSExceptionInit(void)
 	oldOpCode    = *opCodeAddr;
 	handlerStart = (u8*)__OSEVStart;
 	handlerSize  = (u32)((u8*)__OSEVEnd - (u8*)__OSEVStart);
+	#endif
 
 	// Install the DB integrator, only if we are the first OSInit to be run
 	destAddr = (void*)OSPhysicalToCached(OS_DBJUMPPOINT_ADDR);

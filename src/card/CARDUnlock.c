@@ -128,11 +128,12 @@ static s32 ReadArrayUnlock(s32 chan, u32 data, void* rbuf, s32 rlen, s32 mode)
 static u32 GetInitVal(void)
 {
 	u32 tmp;
+
+	#ifndef LIBPORPOISE_PORT
+	//TODO
 	u32 tick;
 
 	tick = OSGetTick();
-	#ifndef LIBPORPOISE_PORT
-	//TODO
 	srand(tick);
 	#endif
 	tmp = 0x7fec8000;
@@ -160,6 +161,8 @@ static s32 DummyLen(void)
 	srand(tick);
 
 	tmp = rand();
+	#else
+	tmp = 0;
 	#endif
 	tmp &= 0x0000001f;
 	tmp += 1;
@@ -194,10 +197,14 @@ int __CARDUnlock(int chan, u8 flashID[12])
 	s32 rlen;
 	u32 rshift;
 
+	#ifndef LIBPORPOISE_PORT
 	u8 fsts;
+	#endif
 	u32 wk, wk1;
 	u32 Ans1 = 0;
+	#ifndef LIBPORPOISE_PORT
 	u32 Ans2 = 0;
+	#endif
 	u32* dp;
 	u8 rbuf[64];
 	u32 para1A = 0;
@@ -215,10 +222,14 @@ int __CARDUnlock(int chan, u8 flashID[12])
 	task   = &card->task;
 	param  = (CARDDecodeParameters*)card->workArea;
 	input  = (u8*)((u8*)param + sizeof(CARDDecodeParameters));
+	#ifndef LIBPORPOISE_PORT
 	input  = (u8*)OSRoundUp32B(input);
+	#endif
 	output = input + 32;
 
+	#ifndef LIBPORPOISE_PORT
 	fsts     = 0;
+	#endif
 	init_val = GetInitVal();
 
 	dummy = DummyLen();
@@ -366,7 +377,9 @@ static void DoneCallback(void* _task)
 
 	param  = (CARDDecodeParameters*)card->workArea;
 	input  = (u8*)((u8*)param + sizeof(CARDDecodeParameters));
+	#ifndef LIBPORPOISE_PORT
 	input  = (u8*)OSRoundUp32B(input);
+	#endif
 	output = input + 32;
 
 	Ans2  = *(u32*)output;

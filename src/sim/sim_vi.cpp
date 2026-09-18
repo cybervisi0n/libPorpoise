@@ -47,7 +47,7 @@ void WaitForRetrace() {
     s_waitForRetraceCount++;
     SDL_mutex * dummy = SDL_CreateMutex();
     SDL_LockMutex(dummy);
-    int result = SDL_CondWait(s_retraceCond, dummy);
+    SDL_CondWait(s_retraceCond, dummy);
     SDL_DestroyMutex(dummy);
 }
 

@@ -230,7 +230,8 @@ void GlRenderer::Draw(const RenderVertex * vertices, size_t numVertices, GXPrimi
         gxState.GetIsNumTevStagesDirty() ||
         gxState.GetIsInitialTevColorsDirty() ||
         gxState.GetIsMatrixIndexDirty() ||
-        (ToGlPrimitive(primitive) != mRenderVertsPrimitive)
+        ((u32)ToGlPrimitive(primitive) != (u32)mRenderVertsPrimitive) ||
+        (mRenderVertsPrimitive != GL_TRIANGLES)
     ) {
         // This Drawcall is not batchable. Flush mRenderVerts now
         batchable = false;
@@ -319,7 +320,7 @@ void GlRenderer::Draw(const RenderVertex * vertices, size_t numVertices, GXPrimi
     //upload matrix memory position + texture
     if(gxState.GetIsPosTextureMtxDirty() || gxState.GetIsNormalMtxDirty()) {
         glBindBuffer(GL_UNIFORM_BUFFER, mMatrixMemoryUniformBuffer);
-        const float * matrixMem = gxState.GetXfMemoryPointer();
+        //const float * matrixMem = gxState.GetXfMemoryPointer();
         glBufferSubData(GL_UNIFORM_BUFFER, 0, 240 * sizeof(float), gxState.GetXfMemoryPointer());
         glBindBufferBase(GL_UNIFORM_BUFFER, mMatrixMemoryBlockBinding, mMatrixMemoryUniformBuffer);
         glBindBuffer(GL_UNIFORM_BUFFER, 0);

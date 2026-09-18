@@ -16,39 +16,27 @@ build_target = get_option('build_target')
 ############################################################
 ###                    COMPILER FLAGS                    ###
 ############################################################
-shared_args = []
-
-add_project_arguments(shared_args,
-    language: 'c',
-    native: build_target != 'gc'
-)
-
-add_project_arguments(shared_args,
-    language: 'cpp',
-    native: build_target != 'gc'
-)
-
-libporpoise_shared_args = [
-]
+libporpoise_internal_shared_args = []
+libporpoise_global_shared_args = []
 
 if(build_target != 'gc')
-libporpoise_shared_args += ['-g']
+libporpoise_global_shared_args += ['-g']
 endif
 
 if(get_option('address_sanitizer') == true)
-libporpoise_shared_args += [
+libporpoise_global_shared_args += [
     '-fsanitize=address'
 ]
 endif
 
-libporpoise_c_args = [
-]
+libporpoise_internal_c_args = []
+libporpoise_global_c_args = []
 
-libporpoise_cpp_args = [
-]
+libporpoise_internal_cpp_args = []
+libporpoise_global_cpp_args = []
 
 if(build_target == 'gc') 
-    libporpoise_shared_args += [
+    libporpoise_global_shared_args += [
         # Platform Definitions
         '-nodefaults',
         '-nostdinc',
@@ -73,63 +61,77 @@ if(build_target == 'gc')
 endif
 
 if (build_target == 'win32')
-    libporpoise_shared_args += [
+    libporpoise_internal_shared_args += [
+        '-Wall',
+    ]
+
+    libporpoise_global_shared_args += [
         '-DLIBPORPOISE_PORT',
         '-DLIBPORPOISE_BUILD_WIN',
-        '-DLIBPORPOISE_32BIT',
-        '-w'
+        '-DLIBPORPOISE_32BIT'
     ]
 endif
 
 if (build_target == 'win64')
-    libporpoise_shared_args += [
+    libporpoise_internal_shared_args += [
+        '-Wall',
+    ]
+
+    libporpoise_global_shared_args += [
         '-DLIBPORPOISE_PORT',
         '-DLIBPORPOISE_BUILD_WIN',
-        '-DLIBPORPOISE_64BIT',
-        '-w'
+        '-DLIBPORPOISE_64BIT'
     ]
 endif
 
 if (build_target == 'linux32')
-    libporpoise_shared_args += [
+    libporpoise_internal_shared_args += [
+        '-Wall',
+    ]
+
+    libporpoise_global_shared_args += [
         '-DLIBPORPOISE_PORT',
         '-DLIBPORPOISE_BUILD_LINUX',
         '-D_POSIX_C_SOURCE=200112L',
         '-DLIBPORPOISE_32BIT',
-        '-m32',
-        '-w'
+        '-m32'
     ]
 endif
 
 if (build_target == 'linux64')
-    libporpoise_shared_args += [
+    libporpoise_internal_shared_args += [
+        '-Wall',
+    ]
+
+    libporpoise_global_shared_args += [
         '-DLIBPORPOISE_PORT',
         '-DLIBPORPOISE_BUILD_LINUX',
         '-D_POSIX_C_SOURCE=200112L',
-        '-DLIBPORPOISE_64BIT',
-        '-w'
+        '-DLIBPORPOISE_64BIT'
     ]
 endif
 
-libporpoise_c_args += libporpoise_shared_args
-libporpoise_cpp_args += libporpoise_shared_args
+libporpoise_internal_c_args += libporpoise_internal_shared_args
+libporpoise_global_c_args += libporpoise_global_shared_args
+libporpoise_internal_cpp_args += libporpoise_internal_shared_args
+libporpoise_global_cpp_args += libporpoise_global_shared_args
 
 if(build_target != 'gc')
-libporpoise_c_args += [
+libporpoise_global_c_args += [
     '-std=c99'
 ]
 
-libporpoise_cpp_args += [
+libporpoise_global_cpp_args += [
     '-std=c++20'
 ]
 endif
 
-add_project_arguments(libporpoise_c_args,
+add_project_arguments(libporpoise_global_c_args,
     language: 'c',
     native: build_target != 'gc'
 )
 
-add_project_arguments(libporpoise_cpp_args,
+add_project_arguments(libporpoise_global_cpp_args,
     language: 'cpp',
     native: build_target != 'gc'
 )
@@ -174,7 +176,7 @@ subdir('src')
 ############################################################
 
 libporpoise_dep = declare_dependency(
-    compile_args: libporpoise_shared_args,
+    compile_args: libporpoise_global_shared_args,
     include_directories: libporpoise_includes,
     link_with: libporpoise_libs + libporpoise_prebuilt,
     dependencies: libporpoise_dependencies

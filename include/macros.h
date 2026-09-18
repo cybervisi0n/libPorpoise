@@ -26,7 +26,7 @@
 #define ASSERTMSGLINEV(line, cond, ...) (void)0
 #endif
 
-#ifdef LIBPORPOISE_PORT
+#if defined(LIBPORPOISE_PORT) && !defined(ASSERT)
 #define ASSERT(cond) ASSERTLINE(__LINE__, cond)
 #endif
 

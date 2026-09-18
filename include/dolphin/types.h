@@ -157,7 +157,9 @@ typedef char* Ptr;
 #define NRef TERNARY_BUILD_MATCHING(&, )
 
 // Random and useful macros
+#ifndef LIBPORPOISE_PORT
 #define PATH_MAX  (256)                     // Max path length
+#endif
 #define MAX(a, b) (((a) > (b)) ? (a) : (b)) // Returns the maximum of a and b
 #define MIN(a, b) (((a) < (b)) ? (a) : (b)) // Returns the minimum of a and b
 
@@ -204,6 +206,9 @@ typedef char* Ptr;
 inline void padStack(void)
 {
 	int pad = 0;
+	#ifdef LIBPORPOISE_PORT
+	(void)pad;
+	#endif
 }
 
 // Add an unused variable in an inline function to pad the stack by some number of words

@@ -27,16 +27,15 @@ static std::array<std::vector<std::string>, 2> sCardFilenumIndex = {};
 
 static std::string GetExeDir() {
     char exeNameBuf[512] = {0};
-    int bytes = 0;
     std::string ret = "";
 #ifdef LIBPORPOISE_BUILD_LINUX
-    bytes = std::min<int>(readlink("/proc/self/exe", exeNameBuf, 511), 511 - 1);
+    int bytes = std::min<int>(readlink("/proc/self/exe", exeNameBuf, 511), 511 - 1);
     if(bytes >= 0)
         exeNameBuf[bytes] = '\0';
     char * lastSlash = strrchr(exeNameBuf, '/');
 #endif
 #ifdef LIBPORPOISE_BUILD_WIN
-    bytes = GetModuleFileName(NULL, exeNameBuf, 511);
+    GetModuleFileName(NULL, exeNameBuf, 511);
     char * lastSlash = strrchr(exeNameBuf, '\\');
 #endif
     
@@ -155,7 +154,7 @@ s32 SIM_CARDFastOpen(s32 chan, s32 fileNum, CARDFileInfo* fileInfo) {
         return CARD_RESULT_FATAL_ERROR;
     }
 
-    if(fileNum >= 0 && fileNum < sCardFilenumIndex[chan].size()) {
+    if(fileNum >= 0 && fileNum < (s32)(sCardFilenumIndex[chan].size())) {
         return SIM::CARD::Open(chan, sCardFilenumIndex[chan][fileNum], fileInfo);
     } else {
         return CARD_RESULT_NOFILE;
@@ -167,7 +166,7 @@ s32 SIM_CARDCreate(s32 chan, const char * fileName, u32 size, CARDFileInfo* file
 }
 
 s32 SIM_CARDGetStatus(s32 channel, s32 fileNo, CARDStat* state) {
-    if(fileNo < 0 || fileNo >= sCardFilenumIndex[channel].size()) {
+    if(fileNo < 0 || fileNo >= (s32)(sCardFilenumIndex[channel].size())) {
         return CARD_RESULT_NOFILE;
     }
 

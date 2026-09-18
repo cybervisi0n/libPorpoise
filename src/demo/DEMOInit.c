@@ -106,8 +106,8 @@ static void __DEMOInitMem(void) {
            (u32)VI_DISPLAY_PIX_SZ;
   allocatedFrameBufferSize = fbSize;
   #ifdef LIBPORPOISE_PORT
-  DemoFrameBuffer1 = (void *)OSRoundUp32B((u64)arenaLo);
-  DemoFrameBuffer2 = (void *)OSRoundUp32B((u64)DemoFrameBuffer1 + fbSize);
+  DemoFrameBuffer1 = arenaLo;
+  DemoFrameBuffer2 = DemoFrameBuffer1 + fbSize;
   #else
   DemoFrameBuffer1 = (void *)OSRoundUp32B((u32)arenaLo);
   DemoFrameBuffer2 = (void *)OSRoundUp32B((u32)DemoFrameBuffer1 + fbSize);
@@ -115,7 +115,7 @@ static void __DEMOInitMem(void) {
   DemoCurrentBuffer = DemoFrameBuffer2;
 
   #ifdef LIBPORPOISE_PORT
-  arenaLo = (void *)OSRoundUp32B((u64)DemoFrameBuffer2 + fbSize);
+  arenaLo = (void*)((u8*)DemoFrameBuffer2 + fbSize);
   #else
   arenaLo = (void *)OSRoundUp32B((u32)DemoFrameBuffer2 + fbSize);
   #endif

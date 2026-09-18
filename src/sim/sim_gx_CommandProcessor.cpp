@@ -54,7 +54,7 @@ void CommandProcessor::ProcessFifoData(u8 * data, size_t len, std::endian endian
             case CommandProcessor::State::ReadArguments:
             {
                 size_t argsLen = std::min<size_t>(mRemainingArgBytes, len);
-                for(auto i = 0; i < argsLen; i++) {
+                for(size_t i = 0; i < argsLen; i++) {
                     mArgsVec.push_back(*data);
                     data++;
                     len--;
@@ -67,7 +67,7 @@ void CommandProcessor::ProcessFifoData(u8 * data, size_t len, std::endian endian
             case CommandProcessor::State::ReadGeometry:
             {
                 size_t geometryLen = std::min<size_t>(mRemainingGeometryBytes, len);
-                for(auto i = 0; i < geometryLen; i++) {
+                for(size_t i = 0; i < geometryLen; i++) {
                     mGeometryVec.push_back(*data);
                     data++;
                     len--;
@@ -83,7 +83,7 @@ void CommandProcessor::ProcessFifoData(u8 * data, size_t len, std::endian endian
             case CommandProcessor::State::ReadXfRegData:
             {
                 size_t xfRegDataLen = std::min<size_t>(mRemainingXfRegData, len);
-                for(auto i = 0; i < xfRegDataLen; i++) {
+                for(size_t i = 0; i < xfRegDataLen; i++) {
                     mXfRegDataVec.push_back(*data);
                     data++;
                     len--;
@@ -360,8 +360,8 @@ void CommandProcessor::ProcessBpReg(u8 regAddr, u32 value) {
         case 0x1D:
         case 0x1E:
         case 0x1F:
-            {
-                u8 stage = regAddr - 0x10;
+            //{
+                //u8 stage = regAddr - 0x10;
                 //if (stage >= GX_MAXTEVSTAGE) {
                 //  return;
                 //}
@@ -375,7 +375,8 @@ void CommandProcessor::ProcessBpReg(u8 regAddr, u32 value) {
                 //s.indTexWrapT = static_cast<GXIndTexWrap>(reg_get(value, 3, 16));
                 //s.indTexUseOrigLOD = reg_get(value, 1, 19) != 0;
                 //s.indTexAddPrev = reg_get(value, 1, 20) != 0;
-            } break;
+            //} 
+            break;
         //TEV Order (0x28-0x2F)
         case 0x28:
         case 0x29:
@@ -388,8 +389,8 @@ void CommandProcessor::ProcessBpReg(u8 regAddr, u32 value) {
                 u8 idx = regAddr - 0x28;
 
                 // Reverse mapping from hardware to GX
-                static constexpr GXChannelID r2c[] = {GX_COLOR0A0, GX_COLOR1A1,   GX_COLOR0A0,    GX_COLOR1A1,
-                                                      GX_COLOR0A0, GX_ALPHA_BUMP, GX_ALPHA_BUMPN, GX_COLOR_ZERO};
+               // static constexpr GXChannelID r2c[] = {GX_COLOR0A0, GX_COLOR1A1,   GX_COLOR0A0,    GX_COLOR1A1,
+                //                                      GX_COLOR0A0, GX_ALPHA_BUMP, GX_ALPHA_BUMPN, GX_COLOR_ZERO};
                 
                 for (u8 half = 0; half < 2; ++half) {
                   const u8 stage = idx * 2 + half;

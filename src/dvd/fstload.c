@@ -64,12 +64,19 @@ void __fstLoad(void)
 	int status;
 	char* onStr;
 	u8 idBuffer[64];
+	#ifndef LIBPORPOISE_PORT
 	void* arenaHi;
+	#endif
 	struct blah* di;
 
+	#ifdef LIBPORPOISE_PORT
+	idTmp = (void*)idBuffer;
+	bb2 = (void*)bb2Buf;
+	#else
 	arenaHi = OSGetArenaHi();
 	idTmp   = (void*)OSRoundUp32B(idBuffer);
 	bb2     = (void*)OSRoundUp32B(bb2Buf);
+	#endif
 	DVDReset();
 	DVDReadDiskID(&block, idTmp, cb);
 	do {

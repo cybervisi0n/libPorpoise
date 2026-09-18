@@ -49,7 +49,15 @@ static inline void OSInitFastCast(void)
 #endif
 }
 
-static inline void OSf32tou8(register f32* in, register u8* out)
+static inline void OSf32tou8(
+	#ifndef LIBPORPOISE_PORT
+	register 
+	#endif
+	f32* in, 
+	#ifndef LIBPORPOISE_PORT
+	register 
+	#endif
+	u8* out)
 {
 #ifdef __MWERKS__
 	asm {
@@ -57,11 +65,19 @@ static inline void OSf32tou8(register f32* in, register u8* out)
 		psq_st  f1, 0 (out), 1, OS_FASTCAST_U8
 	}
 #else
-	*out = *in;
+	*out = (u8)(*in);
 #endif
 }
 
-static inline void OSf32tou16(register f32* in, register u16* out)
+static inline void OSf32tou16(
+	#ifndef LIBPORPOISE_PORT
+	register 
+	#endif
+	f32* in,
+	#ifndef LIBPORPOISE_PORT
+	register 
+	#endif
+	u16* out)
 {
 #ifdef __MWERKS__
 	asm {
@@ -69,11 +85,19 @@ static inline void OSf32tou16(register f32* in, register u16* out)
 		psq_st  f1, 0 (out), 1, OS_FASTCAST_U16
 	}
 #else
-	*out = *in;
+	*out = (u16)(*in);
 #endif
 }
 
-static inline void OSf32tos8(register f32* in, register s8* out)
+static inline void OSf32tos8(
+	#ifndef LIBPORPOISE_PORT
+	register 
+	#endif
+	f32* in, 
+	#ifndef LIBPORPOISE_PORT
+	register 
+	#endif
+	s8* out)
 {
 #ifdef __MWERKS__
 	asm {
@@ -81,11 +105,19 @@ static inline void OSf32tos8(register f32* in, register s8* out)
 		psq_st  fp1, 0 (out), 1, OS_FASTCAST_S8
 	}
 #else
-	*out = *in;
+	*out = (s8)(*in);
 #endif
 }
 
-static inline void OSf32tos16(register f32* in, register s16* out)
+static inline void OSf32tos16(
+	#ifndef LIBPORPOISE_PORT
+	register
+	#endif
+	f32* in,
+	#ifndef LIBPORPOISE_PORT
+	register
+	#endif
+	s16* out)
 {
 #ifdef __MWERKS__
 	asm {
@@ -93,11 +125,19 @@ static inline void OSf32tos16(register f32* in, register s16* out)
 		psq_st  fp1, 0 (out), 1, OS_FASTCAST_S16
 	}
 #else
-	*out = *in;
+	*out = (s16)(*in);
 #endif
 }
 
-static inline void OSu8tof32(register u8* in, register f32* out)
+static inline void OSu8tof32(
+	#ifndef LIBPORPOISE_PORT
+	register 
+	#endif
+	u8* in, 
+	#ifndef LIBPORPOISE_PORT
+	register 
+	#endif
+	f32* out)
 {
 #ifdef __MWERKS__
 	asm {
@@ -105,11 +145,19 @@ static inline void OSu8tof32(register u8* in, register f32* out)
 		stfs   fp1, 0 (out)
 	}
 #else
-	*out = *in;
+	*out = (f32)(*in);
 #endif
 }
 
-static inline void OSu16tof32(register u16* in, register f32* out)
+static inline void OSu16tof32(
+	#ifndef LIBPORPOISE_PORT
+	register 
+	#endif
+	u16* in, 
+	#ifndef LIBPORPOISE_PORT
+	register 
+	#endif
+	f32* out)
 {
 #ifdef __MWERKS__
 	asm {
@@ -117,11 +165,19 @@ static inline void OSu16tof32(register u16* in, register f32* out)
 		stfs   fp1, 0 (out)
 	}
 #else
-	*out = *in;
+	*out = (f32)(*in);
 #endif
 }
 
-static inline void OSs8tof32(register s8* in, register f32* out)
+static inline void OSs8tof32(
+	#ifndef LIBPORPOISE_PORT
+	register 
+	#endif
+	s8* in, 
+	#ifndef LIBPORPOISE_PORT
+	register 
+	#endif
+	f32* out)
 {
 #ifdef __MWERKS__
 	asm {
@@ -129,11 +185,19 @@ static inline void OSs8tof32(register s8* in, register f32* out)
 		stfs   fp1, 0 (out)
 	}
 #else
-	*out = *in;
+	*out = (f32)(*in);
 #endif
 }
 
-static inline void OSs16tof32(register s16* in, register f32* out)
+static inline void OSs16tof32(
+	#ifndef LIBPORPOISE_PORT
+	register 
+	#endif
+	s16* in,
+	#ifndef LIBPORPOISE_PORT
+	register 
+	#endif
+	f32* out)
 {
 #ifdef __MWERKS__
 	asm {
@@ -141,7 +205,7 @@ static inline void OSs16tof32(register s16* in, register f32* out)
 		stfs   fp1, 0 (out)
 	}
 #else
-	*out = *in;
+	*out = (f32)(*in);
 #endif
 }
 

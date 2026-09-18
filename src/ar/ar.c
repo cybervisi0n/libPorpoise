@@ -148,7 +148,7 @@ u32 ARInit(u32* stack_index_addr, u32 num_entries)
 
 #if OS_BUILD_VERSION >= 20011217L
 	// WHY?
-	__DSPRegs[DSP_ARAM_REFRESH] = __DSPRegs[DSP_ARAM_REFRESH] & 0xff | __DSPRegs[DSP_ARAM_REFRESH] & ~0xff;
+	__DSPRegs[DSP_ARAM_REFRESH] = (__DSPRegs[DSP_ARAM_REFRESH] & 0xff) | (__DSPRegs[DSP_ARAM_REFRESH] & ~0xff);
 #else
 	refresh = 196.0f * (OS_BUS_CLOCK / 202500000.0f);
 
@@ -255,7 +255,7 @@ void __ARWriteDMA(u32 mmem_addr, u32 aram_addr, u32 length)
 	__ARWaitForDMA();
 
 #if OS_BUILD_VERSION >= 20011217L
-	__DSPRegs[DSP_CONTROL_STATUS] = __DSPRegs[DSP_CONTROL_STATUS] & ~0x88 | 0x20;
+	__DSPRegs[DSP_CONTROL_STATUS] = (__DSPRegs[DSP_CONTROL_STATUS] & ~0x88) | 0x20;
 #endif
 }
 
@@ -282,7 +282,7 @@ void __ARReadDMA(u32 mmem_addr, u32 aram_addr, u32 length)
 	__ARWaitForDMA();
 
 #if OS_BUILD_VERSION >= 20011217L
-	__DSPRegs[DSP_CONTROL_STATUS] = __DSPRegs[DSP_CONTROL_STATUS] & ~0x88 | 0x20;
+	__DSPRegs[DSP_CONTROL_STATUS] = (__DSPRegs[DSP_CONTROL_STATUS] & ~0x88) | 0x20;
 #endif
 }
 
@@ -325,14 +325,14 @@ void __ARChecksize(void)
 	ARAM_size = 0;
 #endif
 
-	#ifdef GAMECUBE
+	#ifndef LIBPORPOISE_PORT
 	test_data  = (u32*)(OSRoundUp32B((u32)(test_data_pad)));
 	dummy_data = (u32*)(OSRoundUp32B((u32)(dummy_data_pad)));
 	buffer     = (u32*)(OSRoundUp32B((u32)(buffer_pad)));
 	#else
-	test_data  = (u32*)(OSRoundUp32B((u64)(test_data_pad)));
-	dummy_data = (u32*)(OSRoundUp32B((u64)(dummy_data_pad)));
-	buffer     = (u32*)(OSRoundUp32B((u64)(buffer_pad)));
+	test_data  = (u32*)(test_data_pad);
+	dummy_data = (u32*)(dummy_data_pad);
+	buffer     = (u32*)(buffer_pad);
 	#endif
 
 	for (i = 0; i < 8; i++) {

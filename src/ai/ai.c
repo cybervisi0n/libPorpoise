@@ -11,7 +11,9 @@
 static AISCallback __AIS_Callback;
 static AIDCallback __AID_Callback;
 static u8* __CallbackStack;
+#ifndef LIBPORPOISE_PORT
 static u8* __OldStack;
+#endif
 static BOOL __AI_init_flag;
 static OSTime bound_32KHz;
 static OSTime bound_48KHz;
@@ -41,23 +43,28 @@ static void __AI_SRC_INIT(void);
 AIDCallback AIRegisterDMACallback(AIDCallback callback)
 {
 	AIDCallback old_callback;
+	#ifndef LIBPORPOISE_PORT
 	BOOL old;
+	#endif
 
 	old_callback   = __AID_Callback;
+	#ifndef LIBPORPOISE_PORT
 	old            = OSDisableInterrupts();
+	#endif
 	__AID_Callback = callback;
+	#ifndef LIBPORPOISE_PORT
 	OSRestoreInterrupts(old);
+	#endif
 	return old_callback;
 }
 
 void AIInitDMA(u32 start_addr, u32 length)
 {
-	BOOL old;
-
 	#ifdef LIBPORPOISE_PORT
 	u32 startMemHndl = SIM_Memory_CreateMemoryHandle((void*)start_addr);
 	SIM_AIInitDma(startMemHndl, length);
 	#else
+	BOOL old;
 	old           = OSDisableInterrupts();
 	__DSPRegs[24] = (__DSPRegs[24] & 0xFFFFFC00) | (start_addr >> 16);
 	__DSPRegs[25] = (__DSPRegs[25] & 0xFFFF001F) | (start_addr & 0xFFFF);
@@ -366,17 +373,21 @@ void __AI_SRC_INIT(void)
 	OSTime rising_32khz = 0;
 	OSTime rising_48khz = 0;
 	OSTime diff         = 0;
+	#ifndef LIBPORPOISE_PORT
 	OSTime t1           = 0;
+	#endif
 	OSTime temp;
 	u32 temp0;
 	u32 temp1;
 	u32 done     = 0;
+#ifndef LIBPORPOISE_PORT
 	u32 volume   = 0;
 	u32 Init_Cnt = 0;
 	u32 walking  = 0;
 
 	walking  = 0;
 	Init_Cnt = 0;
+#endif
 	temp     = 0;
 
 #if DEBUG
@@ -423,16 +434,22 @@ void __AI_SRC_INIT(void)
 		if (diff < bound_32KHz - buffer) {
 			temp = min_wait;
 			done = 1;
+			#ifndef LIBPORPOISE_PORT
 			Init_Cnt++;
+			#endif
 		} else if (diff >= bound_32KHz + buffer
 		           && diff < bound_48KHz - buffer) {
 			temp = max_wait;
 			done = 1;
+			#ifndef LIBPORPOISE_PORT
 			Init_Cnt++;
+			#endif
 		} else {
 			done    = 0;
+			#ifndef LIBPORPOISE_PORT
 			walking = 1;
 			Init_Cnt++;
+			#endif
 		}
 		#ifdef LIBPORPOISE_PORT
 		done = 1;

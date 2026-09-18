@@ -23,16 +23,15 @@ static std::vector<std::string> s_dvdEntrynumIndex = {};
 
 static std::string GetExeDir() {
     char exeNameBuf[512] = {0};
-    int bytes = 0;
     std::string ret = "";
 #ifdef LIBPORPOISE_BUILD_LINUX
-    bytes = std::min<int>(readlink("/proc/self/exe", exeNameBuf, 511), 511 - 1);
+    int bytes = std::min<int>(readlink("/proc/self/exe", exeNameBuf, 511), 511 - 1);
     if(bytes >= 0)
         exeNameBuf[bytes] = '\0';
     char * lastSlash = strrchr(exeNameBuf, '/');
 #endif
 #ifdef LIBPORPOISE_BUILD_WIN
-    bytes = GetModuleFileName(NULL, exeNameBuf, 511);
+    GetModuleFileName(NULL, exeNameBuf, 511);
     char * lastSlash = strrchr(exeNameBuf, '\\');
 #endif
     

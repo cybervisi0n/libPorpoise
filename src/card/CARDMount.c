@@ -23,7 +23,7 @@ static void DoUnmount(s32 channel, s32 result);
 BOOL CARDProbe(s32 channel)
 {
 #ifdef LIBPORPOISE_PORT
-	return 1;
+	return CARD_RESULT_READY;
 #endif
 #if OS_BUILD_VERSION >= 20011002L
 	if (GameChoice & 0x80) {
@@ -40,7 +40,7 @@ BOOL CARDProbe(s32 channel)
 static inline BOOL IsCard(u32 id)
 {
 #if OS_BUILD_VERSION >= 20011002L
-	if ((id == 0x80000004 && __CARDVendorID != 0xFFFF) || !(id & 0xFFFF0000) && !(id & 3)) {
+	if ((id == 0x80000004 && __CARDVendorID != 0xFFFF) || (!(id & 0xFFFF0000) && !(id & 3))) {
 		return TRUE;
 	}
 	return FALSE;
@@ -130,7 +130,7 @@ s32 CARDProbeEx(s32 channel, s32* memSize, s32* sectorSize)
 		result = CARD_RESULT_WRONGDEVICE;
 	else if (!EXIGetID(channel, 0, &id))
 		result = CARD_RESULT_BUSY;
-	else if ((id == 0x80000004 && __CARDVendorID != 0xFFFF) || !(id & 0xFFFF0000) && !(id & 3)) {
+	else if ((id == 0x80000004 && __CARDVendorID != 0xFFFF) || (!(id & 0xFFFF0000) && !(id & 3))) {
 		if (memSize) {
 			*memSize = (s32)(id & 0xfc);
 		}

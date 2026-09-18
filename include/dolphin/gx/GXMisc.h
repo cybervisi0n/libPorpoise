@@ -17,9 +17,18 @@ typedef void (*GXDrawDoneCallback)(void);
 ////////////////////////////////////////////
 
 ///////////// BASIC FUNCTIONS //////////////
-static GXTexRegion* __GXDefaultTexRegionCallback(GXTexObj* obj, GXTexMapID id);
-static GXTlutRegion* __GXDefaultTlutRegionCallback(u32 tlut);
-static BOOL __GXShutdown(BOOL final); // need to check types
+#ifndef LIBPORPOISE_PORT
+static 
+#endif
+GXTexRegion* __GXDefaultTexRegionCallback(GXTexObj* obj, GXTexMapID id);
+#ifndef LIBPORPOISE_PORT
+static 
+#endif
+GXTlutRegion* __GXDefaultTlutRegionCallback(u32 tlut);
+#ifndef LIBPORPOISE_PORT
+static 
+#endif
+BOOL __GXShutdown(BOOL final); // need to check types
 
 ////////////////////////////////////////////
 

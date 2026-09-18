@@ -102,5 +102,8 @@ s32 CARDDelete(s32 chan, const char* fileName)
 s32 CARDDeleteAsync(s32 chan, const char* fileName, CARDCallback callback)
 {
 	TRAP_UNIMPLEMENTED;
+	#ifdef LIBPORPOISE_PORT
+	return 0;
+	#endif
 }
 

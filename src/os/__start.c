@@ -8,7 +8,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef LIBPORPOISE_PORT
 #pragma section code_type ".init"
+#endif
 
 #define PAD3_BUTTON_ADDR        0x800030E4
 #define EXCEPTIONMASK_ADDR      0x80000044
@@ -19,9 +21,12 @@
 #define DOL_ADDR_LIMIT          0x80700000
 
 extern int main(int argc, char* argv[]);
+#ifndef LIBPORPOISE_PORT
 static void __init_registers(void);
 static void __init_data(void);
+#endif
 
+#ifndef LIBPORPOISE_PORT
 extern u16 Pad3Button AT_ADDRESS(PAD3_BUTTON_ADDR);
 
 #if OS_BUILD_VERSION >= 20011002L
@@ -32,6 +37,7 @@ static void __check_pad3(void)
 	}
 	return;
 }
+#endif
 #endif
 
 WEAK ASM void __start(void)
@@ -128,6 +134,7 @@ _end:
 #endif // clang-format on
 }
 
+#ifndef LIBPORPOISE_PORT
 ASM static void __init_registers(void)
 {
 #ifdef __MWERKS__ // clang-format off
@@ -183,3 +190,4 @@ static void __init_data(void)
 	}
 	#endif
 }
+#endif

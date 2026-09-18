@@ -299,6 +299,9 @@ ASM u32 OSSaveContext(register OSContext* context) {
 	li     r3, 0
 	blr
 #endif // clang-format on
+#ifdef LIBPORPOISE_PORT
+return 0;
+#endif
 }
 
 /**
@@ -387,6 +390,9 @@ ASM u32 OSGetStackPointer(void) {
 	mr   r3, r1
 	blr
 #endif // clang-format on
+#ifdef LIBPORPOISE_PORT
+return 0;
+#endif
 }
 
 /**
@@ -396,6 +402,9 @@ ASM u32 OSGetStackPointer(void) {
 u32 OSSwitchStack(register u32 newsp)
 {
 	TRAP_UNIMPLEMENTED;
+#ifdef LIBPORPOISE_PORT
+return 0;
+#endif
 }
 
 /**
@@ -405,6 +414,9 @@ u32 OSSwitchStack(register u32 newsp)
 int OSSwitchFiber(register u32 pc, register u32 newsp)
 {
 	TRAP_UNIMPLEMENTED;
+#ifdef LIBPORPOISE_PORT
+return 0;
+#endif
 }
 
 /**

@@ -5,9 +5,13 @@
  */
 u32 PPCMfmsr(void)
 {
+	#ifdef LIBPORPOISE_PORT
+	return 0;
+	#else
 	register u32 result;
 	PPC_MOVE_FROM_MSR(result);
 	return result;
+	#endif
 }
 
 /**
@@ -50,9 +54,13 @@ void PPCAndCMsr(void)
  */
 u32 PPCMfhid0(void)
 {
+	#ifdef LIBPORPOISE_PORT
+	return 0;
+	#else
 	register u32 result;
 	PPC_MOVE_FROM_SPR(SPR_HID0, result);
 	return result;
+	#endif
 }
 
 /**
@@ -70,9 +78,13 @@ void PPCMthid0(register u32 value)
  */
 u32 PPCMfhid1(void)
 {
+	#ifdef LIBPORPOISE_PORT
+	return 0;
+	#else
 	register u32 result;
 	PPC_MOVE_FROM_SPR(SPR_HID1, result);
 	return result;
+	#endif
 }
 
 /**
@@ -80,9 +92,13 @@ u32 PPCMfhid1(void)
  */
 u32 PPCMfl2cr(void)
 {
+	#ifdef LIBPORPOISE_PORT
+	return 0;
+	#else
 	register u32 result;
 	PPC_MOVE_FROM_SPR(SPR_L2CR, result);
 	return result;
+	#endif
 }
 
 /**
@@ -107,9 +123,13 @@ void PPCMtdec(register u32 value)
  */
 u32 PPCMfdec(void)
 {
+	#ifdef LIBPORPOISE_PORT
+	return 0;
+	#else
 	register u32 result;
 	PPC_MOVE_FROM_SPR(SPR_DEC, result);
 	return result;
+	#endif
 }
 
 /**
@@ -172,9 +192,13 @@ void PPCHalt(void)
  */
 u32 PPCMfmmcr0(void)
 {
+	#ifdef LIBPORPOISE_PORT
+	return 0;
+	#else
 	register u32 result;
 	PPC_MOVE_FROM_SPR(SPR_MMCR0, result);
 	return result;
+	#endif
 }
 
 /**
@@ -192,9 +216,13 @@ void PPCMtmmcr0(register u32 value)
  */
 u32 PPCMfmmcr1(void)
 {
+	#ifdef LIBPORPOISE_PORT
+	return 0;
+	#else
 	register u32 result;
 	PPC_MOVE_FROM_SPR(SPR_MMCR1, result);
 	return result;
+	#endif
 }
 
 /**
@@ -212,9 +240,13 @@ void PPCMtmmcr1(register u32 value)
  */
 u32 PPCMfpmc1(void)
 {
+	#ifdef LIBPORPOISE_PORT
+	return 0;
+	#else
 	register u32 result;
 	PPC_MOVE_FROM_SPR(SPR_PMC1, result);
 	return result;
+	#endif
 }
 
 /**
@@ -232,9 +264,13 @@ void PPCMtpmc1(register u32 value)
  */
 u32 PPCMfpmc2(void)
 {
+	#ifdef LIBPORPOISE_PORT
+	return 0;
+	#else
 	register u32 result;
 	PPC_MOVE_FROM_SPR(SPR_PMC2, result);
 	return result;
+	#endif
 }
 
 /**
@@ -252,9 +288,13 @@ void PPCMtpmc2(register u32 value)
  */
 u32 PPCMfpmc3(void)
 {
+	#ifdef LIBPORPOISE_PORT
+	return 0;
+	#else
 	register u32 result;
 	PPC_MOVE_FROM_SPR(SPR_PMC3, result);
 	return result;
+	#endif
 }
 
 /**
@@ -272,9 +312,13 @@ void PPCMtpmc3(register u32 value)
  */
 u32 PPCMfpmc4(void)
 {
+	#ifdef LIBPORPOISE_PORT
+	return 0;
+	#else
 	register u32 result;
 	PPC_MOVE_FROM_SPR(SPR_PMC4, result);
 	return result;
+	#endif
 }
 
 /**
@@ -292,9 +336,13 @@ void PPCMtpmc4(register u32 value)
  */
 u32 PPCMfsia(void)
 {
+	#ifdef LIBPORPOISE_PORT
+	return 0;
+	#else
 	register u32 result;
 	PPC_MOVE_FROM_SPR(SPR_SIA, result);
 	return result;
+	#endif
 }
 
 /**
@@ -311,9 +359,13 @@ void PPCMtsia(register u32 value)
  */
 u32 PPCMfhid2(void)
 {
+	#ifdef LIBPORPOISE_PORT
+	return 0;
+	#else
 	register u32 result;
 	PPC_MOVE_FROM_SPR(SPR_HID2, result);
 	return result;
+	#endif
 }
 
 /**
@@ -330,9 +382,13 @@ void PPCMthid2(register u32 value)
  */
 u32 PPCMfwpar(void)
 {
+	#ifdef LIBPORPOISE_PORT
+	return 0;
+	#else
 	register u32 result;
 	PPC_MOVE_FROM_SPR(SPR_WPAR, result);
 	return result;
+	#endif
 }
 
 /**
@@ -349,9 +405,13 @@ void PPCMtwpar(register u32 value)
  */
 u32 PPCMfdmaU(void)
 {
+	#ifdef LIBPORPOISE_PORT
+	return 0;
+	#else
 	register u32 result;
 	PPC_MOVE_FROM_SPR(SPR_DMA_U, result);
 	return result;
+	#endif
 }
 
 /**
@@ -360,9 +420,13 @@ u32 PPCMfdmaU(void)
  */
 u32 PPCMfdmaL(void)
 {
+	#ifdef LIBPORPOISE_PORT
+	return 0;
+	#else
 	register u32 result;
 	PPC_MOVE_FROM_SPR(SPR_DMA_L, result);
 	return result;
+	#endif
 }
 
 /**
@@ -389,7 +453,11 @@ void PPCMtdmaL(register u32 value)
  */
 u32 PPCMfpvr(void)
 {
+	#ifdef LIBPORPOISE_PORT
+	return 0;
+	#else
 	register u32 result;
 	PPC_MOVE_FROM_SPR(SPR_PVR, result);
 	return result;
+	#endif
 }

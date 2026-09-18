@@ -32,7 +32,9 @@ static void WriteCallback(s32 channel, s32 result)
 		}
 	}
 
+#ifndef LIBPORPOISE_PORT
 error:
+#endif
 	if (card->apiCallback == NULL) {
 		__CARDPutControlBlock(card, result);
 	}

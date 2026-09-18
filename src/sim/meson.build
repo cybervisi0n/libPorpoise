@@ -25,7 +25,9 @@ libsim_srcs = files(
 
 libsim_dependencies = []
 libsim_includes = [libporpoise_includes]
-libsim_args = []
+libsim_args = libporpoise_internal_shared_args
+
+libsim_args += ['-O2', '-Wall', '-Werror']
 
 if(get_option('tracy_enable'))
 tracy_dep = dependency(

@@ -10,7 +10,7 @@ class MessageQueue {
     T *data;
     unsigned read_pos;
     unsigned write_pos;
-    signed int in_use;
+    unsigned int in_use;
     const unsigned capacity;
 	SDL_sem* semaphore;
     SDL_mutex* mutex;

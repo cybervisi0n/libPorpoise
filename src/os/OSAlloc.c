@@ -231,10 +231,16 @@ void* OSInitAlloc(void* arenaStart, void* arenaEnd, int maxHeaps)
 	__OSCurrHeap = -1;
 
 	arenaStart = (u8*)HeapArray + totalSize;
+	#ifndef LIBPORPOISE_PORT
 	arenaStart = (void*)OSRoundUp32B(arenaStart);
+	#endif
 
 	ArenaStart = arenaStart;
+	#ifdef LIBPORPOISE_PORT
+	ArenaEnd = arenaEnd;
+	#else
 	ArenaEnd   = (void*)OSRoundDown32B(arenaEnd);
+	#endif
 
 	return arenaStart;
 }
@@ -246,9 +252,15 @@ void* OSInitAlloc(void* arenaStart, void* arenaEnd, int maxHeaps)
 OSHeapHandle OSCreateHeap(void* start, void* end)
 {
 	int i;
+	#ifdef LIBPORPOISE_PORT
+	HeapCell * cell = (HeapCell*)start;
+	#else
 	HeapCell* cell = (void*)OSRoundUp32B(start);
+	#endif
 
+	#ifndef LIBPORPOISE_PORT
 	end = (void*)OSRoundDown32B(end);
+	#endif
 	for (i = 0; i < NumHeaps; i++) {
 		Heap* hd = &HeapArray[i];
 
@@ -290,6 +302,7 @@ void OSAddToHeap(void)
 s32 OSCheckHeap(int)
 {
 	TRAP_UNIMPLEMENTED;
+	return 0;
 }
 
 /**
