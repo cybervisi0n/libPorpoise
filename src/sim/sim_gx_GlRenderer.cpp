@@ -49,6 +49,9 @@ void GlRenderer::Initialize() {
     mRenderVerts = new RenderVertex[InitialRenderVertsCapacity];
     mRenderVertsCount = 0;
     mRenderVertsCapacity = InitialRenderVertsCapacity;
+    mRenderIndices = new u32[InitialRenderVertsCapacity];
+    mRenderIndicesCount = 0;
+    mRenderIndicesCapacity = InitialRenderVertsCapacity;
 
     glGenVertexArrays(1, &mVertexArray);
     glGenBuffers(1, &mVertexBuffer);

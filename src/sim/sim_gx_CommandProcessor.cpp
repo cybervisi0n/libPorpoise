@@ -5,6 +5,7 @@
 #include <dolphin.h>
 #include <simulator/sim_gx_CommandProcessor.hpp>
 #include <simulator/sim_gx_State.hpp>
+#include <simulator/sim_gx_Thread.hpp>
 #include <simulator/sim.h>
 #include <simulator/byteswap.h>
 #include <simulator/sim_memory.hpp>
@@ -37,6 +38,9 @@ void CommandProcessor::ProcessFifoData(u8 * data, size_t len, std::endian endian
                 if(currentByte >= 0x80) {
                     //This is a beginPrimitive opcode, extract out the Vtx Format
                     mLastVertexFormatIdx = static_cast<GXVtxFmt>(currentByte & GX_VTXFMT7);
+                    if(mLastVertexFormatIdx != 0) {
+                        printf("here\n");
+                    }
                     currentByte = currentByte & ~(GX_VTXFMT7);
                 }
                 CommandProcessor::Opcode code = static_cast<CommandProcessor::Opcode>(currentByte);
@@ -168,6 +172,9 @@ void CommandProcessor::ProcessOpcode(std::endian endian) {
                 if (regId == 0xFE) {
                   // BP mask write: applies to the next BP register write only
                   gxState.SetBpRegCache(regId, value & 0x00FFFFFF);
+                } else if (regId == 0x45) {
+                    // GX Draw done
+                    SetDrawDone();
                 } else {
                     const u32 ssMask = gxState.GetBpRegCache(0xFE);
                     gxState.SetBpRegCache(0xFE, 0x00FFFFFF);

@@ -62,6 +62,8 @@ bool IsThreadDone();
 void TakeRenderContext();
 void GiveRenderContext();
 void FlushGlBuffer();
+void WaitDrawDone();
+void SetDrawDone();
 
 }
 

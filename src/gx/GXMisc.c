@@ -3,6 +3,10 @@
 #include <dolphin/hw_regs.h>
 #include <stddef.h>
 
+#ifdef LIBPORPOISE_PORT
+#include <simulator/sim_gx_Thread.h>
+#endif
+
 static GXDrawSyncCallback TokenCB;
 static GXDrawDoneCallback DrawDoneCB;
 static u8 DrawDone;
@@ -67,6 +71,9 @@ void GXFlush(void)
 	}
 #endif
 	PPCSync();
+#ifdef LIBPORPOISE_PORT
+	SIM_GX_FlushFifo();
+#endif
 }
 
 /**
@@ -169,8 +176,10 @@ void GXWaitDrawDone(void)
 	CHECK_GXBEGIN(483, "GXWaitDrawDone");
 
 	enabled = OSDisableInterrupts();
-	#ifndef LIBPORPOISE_PORT
-	//TODO
+	#ifdef LIBPORPOISE_PORT
+	// wait until GX thread reaches the DrawDone command in the fifo
+	SIM_GX_WaitDrawDone();
+	#else
 	while (!DrawDone) {
 		OSSleepThread(&FinishQueue);
 	}

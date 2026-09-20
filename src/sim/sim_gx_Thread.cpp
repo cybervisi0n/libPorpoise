@@ -14,9 +14,10 @@
 #define COMMAND_PROCESSOR_DEBUG 0
 
 static SIM::GX::CommandProcessor sCommandProcessor = SIM::GX::CommandProcessor();
-static SIM::MessageQueue sMessageQueue = SIM::MessageQueue<SIM::GX::ThreadMessage>(256 * 1024);
+static SIM::MessageQueue sMessageQueue = SIM::MessageQueue<SIM::GX::ThreadMessage>(512 * 1024);
 static SDL_Thread * sGxMainThread;
 static SDL_sem* sGxRenderContextSemaphore;
+static SDL_sem* sGxDrawDoneSemaphore;
 
 static bool sInDisplayList = false;
 static u32 sDisplayListBytes = 0;
@@ -35,6 +36,7 @@ int MainThread(void * arg) {
 
     SIM::AcquireRenderContext();
     sGxRenderContextSemaphore = SDL_CreateSemaphore(0);
+    sGxDrawDoneSemaphore = SDL_CreateSemaphore(0);
     while(true) {
         //Wait for messages
         auto msg = sMessageQueue.ReceiveMessage();
@@ -150,6 +152,15 @@ void SendFifoMessage(T data) {
         return;
     }
 
+    #if COMMAND_PROCESSOR_DEBUG
+    u8 * dataPtr = (u8*)(&data);
+    sCommandProcessor.ProcessFifoData(dataPtr, dataLen, std::endian::native);
+    return;
+    #endif
+    //#else
+    //sMessageQueue.SendMessage(msg);
+    //#endif
+
 
     // Add to the internal message buffer
     if(sInternalFifoBuffer == nullptr) {
@@ -163,11 +174,6 @@ void SendFifoMessage(T data) {
         FlushFifoBuffer();
     }
     //msg.mDataLen = dataLen;
-    //#if COMMAND_PROCESSOR_DEBUG
-    //sCommandProcessor.ProcessFifoData(msg.mData, msg.mDataLen, std::endian::native);
-    //#else
-    //sMessageQueue.SendMessage(msg);
-    //#endif
 }
 
 void SendThreadMessage(ThreadMessage& msg) {
@@ -197,7 +203,13 @@ bool IsThreadDone() {
     return sMessageQueue.empty();
 }
 
+void WaitDrawDone() {
+    SDL_SemWait(sGxDrawDoneSemaphore);
+}
 
+void SetDrawDone() {
+    SDL_SemPost(sGxDrawDoneSemaphore);
+}
 
 
 }
@@ -251,4 +263,12 @@ void SIM_GX_CommandProcessor_SetVertexArray(GXAttr attr, void * ptr, int stride)
     msg.mVertexArray.mArrayPtr = ptr;
     msg.mVertexArray.mStride = stride;
     sMessageQueue.SendMessage(msg);
+}
+
+void SIM_GX_FlushFifo() {
+    SIM::GX::FlushFifoBuffer();
+}
+
+void SIM_GX_WaitDrawDone() {
+    SIM::GX::WaitDrawDone();
 }
