@@ -555,12 +555,12 @@ void CommandProcessor::ProcessBpReg(u8 regAddr, u32 value) {
                 if (GetRegValue(value, 2, 16) == 3) {
                   u32 hwOp = GetRegValue(value, 1, 18) | (GetRegValue(value, 2, 20) << 1);
                   s.mColorOperation = static_cast<GXTevOp>(hwOp + 8);
-                  s.mBias = GX_TB_ZERO;
-                  s.mScale = GX_CS_SCALE_1;
+                  s.mColorBias = GX_TB_ZERO;
+                  s.mColorScale = GX_CS_SCALE_1;
                 } else {
                   s.mColorOperation = static_cast<GXTevOp>(GetRegValue(value, 1, 18));
-                  s.mBias = static_cast<GXTevBias>(GetRegValue(value, 2, 16));
-                  s.mScale = static_cast<GXTevScale>(GetRegValue(value, 2, 20));
+                  s.mColorBias = static_cast<GXTevBias>(GetRegValue(value, 2, 16));
+                  s.mColorScale = static_cast<GXTevScale>(GetRegValue(value, 2, 20));
                 }
             } break;
         // TEV alpha combiner stages (0xC1, 0xC3, ... 0xDF)
@@ -597,12 +597,12 @@ void CommandProcessor::ProcessBpReg(u8 regAddr, u32 value) {
                 if (GetRegValue(value, 2, 16) == 3) {
                   u32 hwOp = GetRegValue(value, 1, 18) | (GetRegValue(value, 2, 20) << 1);
                   s.mAlphaOperation = static_cast<GXTevOp>(hwOp + 8);
-                  //s.alphaOp.bias = GX_TB_ZERO;
-                  //s.alphaOp.scale = GX_CS_SCALE_1;
+                  s.mAlphaBias = GX_TB_ZERO;
+                  s.mAlphaScale = GX_CS_SCALE_1;
                 } else {
-                  //s.alphaOp.op = static_cast<GXTevOp>(GetRegValue(value, 1, 18));
-                  //s.alphaOp.bias = static_cast<GXTevBias>(GetRegValue(value, 2, 16));
-                  //s.alphaOp.scale = static_cast<GXTevScale>(GetRegValue(value, 2, 20));
+                  s.mAlphaOperation = static_cast<GXTevOp>(GetRegValue(value, 1, 18));
+                  s.mAlphaBias = static_cast<GXTevBias>(GetRegValue(value, 2, 16));
+                  s.mAlphaScale = static_cast<GXTevScale>(GetRegValue(value, 2, 20));
                 }
                 gxState.SetTevDirty(true);
             } break;

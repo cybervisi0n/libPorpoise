@@ -46,12 +46,12 @@ struct TevStageConfig {
   GXTevAlphaArg mAlphaArgs[4];
   GXTevRegID mOutReg;
   GXTevClampMode mClampMode;
-  GXTevBias mBias;
-  GXTevScale mScale;
+  GXTevBias mColorBias;
+  GXTevScale mColorScale;
   GXTexCoordID mTexCoordId;
+  GXTevBias mAlphaBias;
+  GXTevScale mAlphaScale;
   u32 pad2;
-  u32 pad3;
-  u32 pad4;
 };
 
 struct TexGenConfig {

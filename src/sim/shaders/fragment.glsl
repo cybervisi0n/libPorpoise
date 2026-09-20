@@ -18,11 +18,11 @@ struct TevStageConfig {
   uvec4 mAlphaArgs;
   uint mOutReg;
   uint mClampMode;
-  uint mBias;
-  uint mScale;
+  uint mColorBias;
+  uint mColorScale;
   uint mTexCoordId;
-  uint pad2;
-  uint pad3;
+  uint mAlphaBias;
+  uint mAlphaScale;
   uint pad4;
 };
 
@@ -35,6 +35,32 @@ uniform vec4 initialTevColors[4];
 
 vec4 tevRegs[4];
 vec4 tevResult = vec4(0.0, 0.0, 0.0, 1.0);
+
+float GetBias(uint biasEnum) {
+  switch(biasEnum) {
+    default:
+    case 0u: /*GX_TB_ZERO*/
+      return 0.0;
+    case 1u: /*GX_TB_ADDHALF*/
+      return 0.5;
+    case 2u: /*GX_TB_SUBHALF*/
+      return -0.5;
+  }
+}
+
+float GetScale(uint scaleEnum) {
+  switch(scaleEnum) {
+    default:
+    case 0u: /*GX_CS_SCALE_1*/
+      return 1.0;
+    case 1u: /*GX_CS_SCALE_2*/
+      return 2.0;
+    case 2u: /*GX_CS_SCALE_4*/
+      return 4.0;
+    case 3u: /*GX_CS_DIVIDE_2*/
+      return 0.5;
+  }
+}
 
 vec4 TexMapStage0(vec2 stageTexCoords) {
   return texture(tevTexMaps[0], stageTexCoords);
@@ -260,7 +286,7 @@ float GetTevAlphaArg(uint stageNum, uint argNum) {
   return result;
 }
 
-vec3 RunTevColorOperation(uint op) {
+vec3 RunTevColorOperation(uint op, float bias, float scale) {
   vec3 result = vec3(0.0);
   switch(op) {
     case 0u: /* GX_TEV_ADD */
@@ -334,11 +360,14 @@ vec3 RunTevColorOperation(uint op) {
   }
 
   // TODO Apply Scale/bias
+  result += vec3(bias);
+
+  result = result * scale;
 
   return result;
 }
 
-float RunTevAlphaOperation(uint op) {
+float RunTevAlphaOperation(uint op, float bias, float scale) {
   float result = 1.0;
 
   // run operation
@@ -372,7 +401,10 @@ float RunTevAlphaOperation(uint op) {
       break;
   }
 
-  // TODO apply scale/bias
+  //apply scale/bias
+  result += bias;
+
+  result = result * scale;
 
   return result;
 }
@@ -396,8 +428,8 @@ void main()
     tevRegs = tevArgs;
 
     // Run the tev operation
-    tevResult.rgb = RunTevColorOperation(tevStageConfigs[i].mColorOperation);
-    tevResult.a = RunTevAlphaOperation(tevStageConfigs[i].mAlphaOperation);
+    tevResult.rgb = RunTevColorOperation(tevStageConfigs[i].mColorOperation, GetBias(tevStageConfigs[i].mColorBias), GetScale(tevStageConfigs[i].mColorScale));
+    tevResult.a = RunTevAlphaOperation(tevStageConfigs[i].mAlphaOperation, GetBias(tevStageConfigs[i].mAlphaBias), GetScale(tevStageConfigs[i].mAlphaScale));
   }
 
   color = tevResult;
