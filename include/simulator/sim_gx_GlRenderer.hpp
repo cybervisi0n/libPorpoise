@@ -24,19 +24,29 @@ class GlRenderer {
  private:
   void Initialize();
   void ReserveRenderVerts(int numAdditionalVerts);
+  void ReserveRenderIndices(int numAdditionalIndices);
   void ExpandQuads(const SIM::GX::RenderVertex * vertices, size_t numVertices);
   void ExpandQuadStrip(const SIM::GX::RenderVertex * vertices, size_t numVertices);
+  bool IsIndexed(GXPrimitive prim);
 
   unsigned int mVertexArray = 0;
   unsigned int mVertexBuffer = 0;
+  unsigned int mElementBuffer = 0;
   unsigned int mTevStageUniformBuffer = 0;
   unsigned int mLightsUniformBuffer = 0;
   unsigned int mMatrixMemoryUniformBuffer = 0;
 
   RenderVertex * mRenderVerts = nullptr;
+  
   int mRenderVertsPrimitive;
   size_t mRenderVertsCount = 0;
   size_t mRenderVertsCapacity = 0;
+
+  u32 * mRenderIndices = nullptr;
+  size_t mRenderIndicesCount = 0;
+  size_t mRenderIndicesCapacity = 0;
+
+  bool mRenderVertsIndexed;
 
   // Shader Uniform locations
   int mProjectionLocation;
@@ -57,6 +67,7 @@ class GlRenderer {
   int mMtxIdxALocation;
   int mPnMtxIdxEnabledLocation;
   size_t mVboCapacity = 0;
+  size_t mEboCapacity = 0;
 
 
   int mBatchableDrawcalls = 0;

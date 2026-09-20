@@ -119,6 +119,9 @@ void GlRenderer::Initialize() {
         GL_FALSE,
         sizeof(RenderVertex),
         reinterpret_cast<void*>(offsetof(RenderVertex, texMtxIdx) + (4 * sizeof(u32))));
+
+    // Element buffer
+    glGenBuffers(1, &mElementBuffer);
     
     // Allocate tev stage uniform buffer
     glGenBuffers(1, &mTevStageUniformBuffer);
@@ -231,7 +234,7 @@ void GlRenderer::Draw(const RenderVertex * vertices, size_t numVertices, GXPrimi
         gxState.GetIsInitialTevColorsDirty() ||
         gxState.GetIsMatrixIndexDirty() ||
         ((u32)ToGlPrimitive(primitive) != (u32)mRenderVertsPrimitive) ||
-        (mRenderVertsPrimitive != GL_TRIANGLES)
+        (mRenderVertsIndexed != IsIndexed(primitive))
     ) {
         // This Drawcall is not batchable. Flush mRenderVerts now
         batchable = false;
@@ -259,6 +262,8 @@ void GlRenderer::Draw(const RenderVertex * vertices, size_t numVertices, GXPrimi
     }
 
     size_t numDrawVertices = numVertices;
+
+    mRenderVertsIndexed = IsIndexed(primitive);
     if (primitive == GX_QUADS) {
         ExpandQuads(vertices, numVertices);
     } else if (primitive == GX_QUADSTRIP) {
@@ -381,47 +386,78 @@ void GlRenderer::Draw(const RenderVertex * vertices, size_t numVertices, GXPrimi
     }
 }
 
+bool GlRenderer::IsIndexed(GXPrimitive prim) {
+    switch(prim) {
+        case GX_LINESTRIP:
+        case GX_QUADS:
+        case GX_QUADSTRIP:
+            return true;
+        case GX_LINES:
+        case GX_POINTS:
+        case GX_TRIANGLES:
+        case GX_TRIANGLEFAN:
+        case GX_TRIANGLESTRIP:
+        default:
+            return false;
+    }
+}
+
 void GlRenderer::ExpandQuads(
     const SIM::GX::RenderVertex * vertices, size_t numVertices) {
     int numVertsOut = (numVertices / 4) * 6;
-    ReserveRenderVerts(numVertsOut);
-    SIM::GX::RenderVertex * triangles = &mRenderVerts[mRenderVertsCount];
+    ReserveRenderVerts(numVertices);
+    SIM::GX::RenderVertex * renderVertsOut = &mRenderVerts[mRenderVertsCount];
+    std::memcpy(renderVertsOut, vertices, sizeof(SIM::GX::RenderVertex) * numVertices);
+    u32 oldVertexCount = mRenderVertsCount;
+    mRenderVertsCount += numVertices;
+
+    ReserveRenderIndices(numVertsOut);
+    u32 * indices = &mRenderIndices[mRenderIndicesCount];
     size_t trianglesIdx = 0;
     for (size_t i = 0; i + 3 < numVertices; i += 4) {
-        triangles[trianglesIdx++] = (vertices[i]);
-        triangles[trianglesIdx++] = (vertices[i + 1]);
-        triangles[trianglesIdx++] = (vertices[i + 2]);
-        triangles[trianglesIdx++] = (vertices[i]);
-        triangles[trianglesIdx++] = (vertices[i + 2]);
-        triangles[trianglesIdx++] = (vertices[i + 3]);
+        indices[trianglesIdx++] = oldVertexCount + i;
+        indices[trianglesIdx++] = oldVertexCount + i + 1;
+        indices[trianglesIdx++] = oldVertexCount + i + 2;
+        indices[trianglesIdx++] = oldVertexCount + i;
+        indices[trianglesIdx++] = oldVertexCount + i + 2;
+        indices[trianglesIdx++] = oldVertexCount + i + 3;
     }
-    mRenderVertsCount += numVertsOut;
+
+    mRenderIndicesCount += numVertsOut;
 }
 
 void GlRenderer::ExpandQuadStrip(
     const SIM::GX::RenderVertex * vertices, size_t numVertices) {
+    ReserveRenderVerts(numVertices);
+    SIM::GX::RenderVertex * renderVertsOut = &mRenderVerts[mRenderVertsCount];
+    std::memcpy(renderVertsOut, vertices, sizeof(SIM::GX::RenderVertex) * numVertices);
+    u32 oldVertexCount = mRenderVertsCount;
+    mRenderVertsCount += numVertices;
+
     if (numVertices < 4) {
-        ReserveRenderVerts(numVertices);
-        SIM::GX::RenderVertex * triangles = &mRenderVerts[mRenderVertsCount];
-        std::memcpy(triangles, vertices, sizeof(SIM::GX::RenderVertex) * numVertices);
-        mRenderVertsCount += numVertices;
+        ReserveRenderIndices(numVertices);
+        for(size_t i = 0; i < numVertices; i++) {
+            mRenderIndices[oldVertexCount + i] = oldVertexCount + i;
+        }
+        mRenderIndicesCount += numVertices;
         return;
     }
 
     int numVertsOut = ((numVertices - 2) / 2) * 6;
-    ReserveRenderVerts(numVertsOut);
+    ReserveRenderIndices(numVertsOut);
 
-    SIM::GX::RenderVertex * triangles = &mRenderVerts[mRenderVertsCount];
+    u32 * indices = &mRenderIndices[mRenderIndicesCount];
     size_t trianglesIdx = 0;
-    for (size_t i = 0; i + 3 < numVertices; i += 2) {
-        triangles[trianglesIdx++] = (vertices[i]);
-        triangles[trianglesIdx++] = (vertices[i + 1]);
-        triangles[trianglesIdx++] = (vertices[i + 2]);
-        triangles[trianglesIdx++] = (vertices[i]);
-        triangles[trianglesIdx++] = (vertices[i + 2]);
-        triangles[trianglesIdx++] = (vertices[i + 3]);
+    for(size_t i=0; i + 3 < numVertices; i+= 2) {
+        indices[trianglesIdx++] = oldVertexCount + i;
+        indices[trianglesIdx++] = oldVertexCount + i + 1;
+        indices[trianglesIdx++] = oldVertexCount + i + 2;
+        indices[trianglesIdx++] = oldVertexCount + i;
+        indices[trianglesIdx++] = oldVertexCount + i + 2;
+        indices[trianglesIdx++] = oldVertexCount + i + 3;
+
     }
-    mRenderVertsCount += numVertsOut;
+    mRenderIndicesCount += numVertsOut;
 }
 
 void GlRenderer::ReserveRenderVerts(int numAdditionalVerts) {
@@ -434,6 +470,18 @@ void GlRenderer::ReserveRenderVerts(int numAdditionalVerts) {
     delete mRenderVerts;
     mRenderVerts = renderVertsNew;
     mRenderVertsCapacity = mRenderVertsCount + numAdditionalVerts;
+}
+
+void GlRenderer::ReserveRenderIndices(int numAdditionalIndices) {
+    if(mRenderIndicesCount + numAdditionalIndices < mRenderIndicesCapacity) {
+        return;
+    }
+
+    u32 * renderIndicesNew = new u32[mRenderIndicesCount + numAdditionalIndices];
+    memcpy(renderIndicesNew, mRenderVerts, sizeof(u32) * mRenderIndicesCount);
+    delete mRenderIndices;
+    mRenderIndices = renderIndicesNew;
+    mRenderIndicesCapacity = mRenderIndicesCount + numAdditionalIndices;
 }
 
 void GlRenderer::FlushRenderVerts() {
@@ -461,12 +509,34 @@ void GlRenderer::FlushRenderVerts() {
         );
     }
 
-    glDrawArrays(
-        mRenderVertsPrimitive,
-        0,
-        static_cast<GLsizei>(mRenderVertsCount));
+    if(mRenderVertsIndexed) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mElementBuffer);
+        if(mEboCapacity < mRenderIndicesCount) {
+            glBufferData(
+                GL_ELEMENT_ARRAY_BUFFER,
+                static_cast<GLsizeiptr>(mRenderIndicesCount * sizeof(u32)),
+                mRenderIndices,
+                GL_STREAM_DRAW);
+        } else {
+            glBufferSubData(
+                GL_ELEMENT_ARRAY_BUFFER,
+                0,
+                static_cast<GLsizeiptr>(mRenderIndicesCount * sizeof(u32)),
+                mRenderIndices
+            );
+        }
+
+        glDrawElements(mRenderVertsPrimitive, mRenderIndicesCount, GL_UNSIGNED_INT, nullptr);
+    } else {
+        glDrawArrays(
+            mRenderVertsPrimitive,
+            0,
+            static_cast<GLsizei>(mRenderVertsCount));
+    }
+
     
     mRenderVertsCount = 0;
+    mRenderIndicesCount = 0;
 }
 
 GlRenderer& GetGlRenderer() {
