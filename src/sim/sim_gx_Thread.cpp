@@ -43,8 +43,10 @@ int MainThread(void * arg) {
 
         switch(msg.mType) {
             case ThreadMessageType::Fifo:
-                sCommandProcessor.ProcessFifoData(msg.mFifo.fifoData, msg.mFifo.fifoDataLen, std::endian::native);
-                delete(msg.mFifo.fifoData);
+                if(msg.mFifo.fifoData) {
+                    sCommandProcessor.ProcessFifoData(msg.mFifo.fifoData, msg.mFifo.fifoDataLen, std::endian::native);
+                    delete(msg.mFifo.fifoData);
+                }
                 break;
             case ThreadMessageType::SetVertexArray:
                 {
