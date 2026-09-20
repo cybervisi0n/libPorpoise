@@ -100,7 +100,7 @@ endif
 
 if (build_target == 'linux64')
     libporpoise_internal_shared_args += [
-        '-Wall',
+        '-w',
     ]
 
     libporpoise_global_shared_args += [
