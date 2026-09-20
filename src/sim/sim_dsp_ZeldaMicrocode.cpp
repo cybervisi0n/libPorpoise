@@ -172,6 +172,7 @@ void ZeldaMicrocode::RunCommand(Command& cmd) {
         // Setup/initialization
         case 0x01:
             {
+                #ifdef LIBPORPOISE_32BIT
                 mVoicesPerFrame = cmd.mExtraData;
                 mVoiceParams = (VoiceParamBase*)(cmd.mCommandMails[0]);
                 s16 * mixingCoefficientsAddress = (s16*)(cmd.mCommandMails[1]);
@@ -190,6 +191,7 @@ void ZeldaMicrocode::RunCommand(Command& cmd) {
 
 
                 mReverbBaseAddress = (void*)(cmd.mCommandMails[3]);
+                #endif
 
                 SendAck(cmd.mSyncValue);
             } break;
@@ -197,6 +199,7 @@ void ZeldaMicrocode::RunCommand(Command& cmd) {
         // Start audio processing
         case 0x02:
             {
+                #ifdef LIBPORPOISE_32BIT
                 mRequestedFrames = (cmd.mFullCommandMail >> 16) & 0xFF;
                 mOutputVolume = (cmd.mFullCommandMail & 0xFFFF);
                 mOutputLeftBufferAddr = (s16*)(cmd.mCommandMails[0]);
@@ -213,6 +216,7 @@ void ZeldaMicrocode::RunCommand(Command& cmd) {
                 } else {
                     // Not implemented
                 }
+                #endif
             } break;
         
         
@@ -524,7 +528,8 @@ void ZeldaMicrocode::CopyPCMSamplesFromARAM(s16 * dest, VoiceParamBase& vpb, u16
     }
 }
 
-void ZeldaMicrocode::CopyPCMSamplesFromMRAM(s16 * dest, VoiceParamBase& vpb, u16 sampleCount) {
+void ZeldaMicrocode::CopyPCMSamplesFromMRAM([[maybe_unused]]s16 * dest, [[maybe_unused]]VoiceParamBase& vpb, [[maybe_unused]]u16 sampleCount) {
+    #ifdef LIBPORPOISE_32BIT
     s16 * addr = (s16*)(vpb.baseAddress + ((vpb.currentPosition & 0xFFFF0000) >> 16) * sizeof(s16));
 
     u32 remainingLength = vpb.remainingLength;
@@ -562,6 +567,7 @@ void ZeldaMicrocode::CopyPCMSamplesFromMRAM(s16 * dest, VoiceParamBase& vpb, u16
             memcpy(dest + vpb.samplesBeforeLoop, (void*)vpb.loopAddress, ((vpb.currentPosition & 0xFFFF0000) >> 16) * sizeof(s16));
         }
     }
+    #endif
 }
 
 ZeldaMicrocode::MixBuffer * ZeldaMicrocode::GetMixBufferFromChannelID(int id) {
