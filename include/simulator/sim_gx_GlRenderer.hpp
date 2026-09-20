@@ -27,6 +27,7 @@ class GlRenderer {
   void ReserveRenderIndices(int numAdditionalIndices);
   void ExpandQuads(const SIM::GX::RenderVertex * vertices, size_t numVertices);
   void ExpandQuadStrip(const SIM::GX::RenderVertex * vertices, size_t numVertices);
+  void ExpandTriangleStrip(const SIM::GX::RenderVertex * vertices, size_t numVertices);
   bool IsIndexed(GXPrimitive prim);
 
   unsigned int mVertexArray = 0;
