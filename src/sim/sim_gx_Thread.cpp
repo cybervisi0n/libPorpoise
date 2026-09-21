@@ -23,6 +23,7 @@ static bool sInDisplayList = false;
 static u32 sDisplayListBytes = 0;
 static u32 sDisplayListBytesWritten;
 static u8 * sDisplayListPtr = nullptr;
+static SDL_mutex * sFifoMutex;
 
 
 namespace SIM::GX {
@@ -30,6 +31,7 @@ void Init() {
     InitGlobalState();
 
     sGxMainThread = SDL_CreateThread(MainThread, "SIM::GX", nullptr);
+    sFifoMutex = SDL_CreateMutex();
 }
 
 int MainThread(void * arg) {
@@ -46,6 +48,7 @@ int MainThread(void * arg) {
                 if(msg.mFifo.fifoData) {
                     sCommandProcessor.ProcessFifoData(msg.mFifo.fifoData, msg.mFifo.fifoDataLen, std::endian::native);
                     delete(msg.mFifo.fifoData);
+                    msg.mFifo.fifoData = nullptr;
                 }
                 break;
             case ThreadMessageType::SetVertexArray:
@@ -113,6 +116,7 @@ static constexpr auto InternalFifoBufferSendThreshold = 512;
 static u32 sInternalFifoBufferPos = 0;
 
 void FlushFifoBuffer() {
+    SDL_LockMutex(sFifoMutex);
     if(sInternalFifoBufferPos > 0) {
         ThreadMessage msg;
         msg.mType = ThreadMessageType::Fifo;
@@ -123,6 +127,7 @@ void FlushFifoBuffer() {
         sInternalFifoBufferPos = 0;
         sInternalFifoBuffer = new u8[InternalFifoBufferSize];
     }
+    SDL_UnlockMutex(sFifoMutex);
 }
 
 void FlushGlBuffer() {
@@ -165,6 +170,7 @@ void SendFifoMessage(T data) {
 
 
     // Add to the internal message buffer
+    SDL_LockMutex(sFifoMutex);
     if(sInternalFifoBuffer == nullptr) {
         sInternalFifoBuffer = new u8[InternalFifoBufferSize];
     }
@@ -175,6 +181,7 @@ void SendFifoMessage(T data) {
     if(sInternalFifoBufferPos >= InternalFifoBufferSendThreshold) {
         FlushFifoBuffer();
     }
+    SDL_UnlockMutex(sFifoMutex);
     //msg.mDataLen = dataLen;
 }
 
@@ -210,6 +217,7 @@ void WaitDrawDone() {
 }
 
 void SetDrawDone() {
+    printf("GXSetDrawDone\n");
     SDL_SemPost(sGxDrawDoneSemaphore);
 }
 
@@ -272,5 +280,6 @@ void SIM_GX_FlushFifo() {
 }
 
 void SIM_GX_WaitDrawDone() {
+    printf("WaitDrawDone\n");
     SIM::GX::WaitDrawDone();
 }
