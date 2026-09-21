@@ -530,6 +530,10 @@ void OSCancelThread(OSThread* thread)
  */
 BOOL OSJoinThread(OSThread* thread, void** val)
 {
+	#ifdef LIBPORPOISE_PORT
+	SDL_WaitThread((SDL_Thread*)thread->sdlThread, NULL);
+	return FALSE;
+	#else
 	BOOL enabled = OSDisableInterrupts();
 
 	if (!(thread->attr & 1) && (thread->state != 8) && (thread->queueJoin.head == NULL)) {
@@ -551,6 +555,7 @@ BOOL OSJoinThread(OSThread* thread, void** val)
 	}
 	OSRestoreInterrupts(enabled);
 	return 0;
+	#endif
 }
 
 /**
