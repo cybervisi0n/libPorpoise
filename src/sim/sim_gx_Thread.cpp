@@ -217,7 +217,6 @@ void WaitDrawDone() {
 }
 
 void SetDrawDone() {
-    printf("GXSetDrawDone\n");
     SDL_SemPost(sGxDrawDoneSemaphore);
 }
 
@@ -280,6 +279,5 @@ void SIM_GX_FlushFifo() {
 }
 
 void SIM_GX_WaitDrawDone() {
-    printf("WaitDrawDone\n");
-    SIM::GX::WaitDrawDone();
+    //SIM::GX::WaitDrawDone();
 }
