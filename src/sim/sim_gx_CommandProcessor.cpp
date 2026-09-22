@@ -296,11 +296,15 @@ void CommandProcessor::ProcessOpcode(std::endian endian) {
                 u8 * displayListPtr;
                 u32 displayListSize;
                 if(IsByteswapRequired(endian)) {
+                    #ifdef LIBPORPOISE_32BIT
                     displayListPtr = (u8*)(bswap_32(displayListArgs[0]));
                     displayListSize = bswap_32(displayListArgs[1]);
+                    #endif
                 } else {
+                    #ifdef LIBPORPOISE_32BIT
                     displayListPtr = (u8*)(displayListArgs[0]);
                     displayListSize = displayListArgs[1];
+                    #endif
                 }
 
                 mCurrentState = State::ReadOpcode;
