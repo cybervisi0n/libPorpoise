@@ -427,9 +427,28 @@ void main()
 
     tevRegs = tevArgs;
 
+    vec4 opResult;
+
     // Run the tev operation
-    tevResult.rgb = RunTevColorOperation(tevStageConfigs[i].mColorOperation, GetBias(tevStageConfigs[i].mColorBias), GetScale(tevStageConfigs[i].mColorScale));
-    tevResult.a = RunTevAlphaOperation(tevStageConfigs[i].mAlphaOperation, GetBias(tevStageConfigs[i].mAlphaBias), GetScale(tevStageConfigs[i].mAlphaScale));
+    // TODO handle output reg correctly (it's not always TEVResult)
+    opResult.rgb = RunTevColorOperation(tevStageConfigs[i].mColorOperation, GetBias(tevStageConfigs[i].mColorBias), GetScale(tevStageConfigs[i].mColorScale));
+    opResult.a = RunTevAlphaOperation(tevStageConfigs[i].mAlphaOperation, GetBias(tevStageConfigs[i].mAlphaBias), GetScale(tevStageConfigs[i].mAlphaScale));
+
+    switch(tevStageConfigs[i].mOutReg) {
+      case 0u:
+      default:
+        tevResult = opResult;
+        break;
+      case 1u:
+        tevRegs[1] = opResult;
+        break;
+      case 2u:
+        tevRegs[2] = opResult;
+        break;
+      case 3u:
+        tevRegs[3] = opResult;
+        break;
+    }
   }
 
   color = tevResult;

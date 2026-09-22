@@ -517,7 +517,7 @@ void GlRenderer::ReserveRenderIndices(int numAdditionalIndices) {
     }
 
     u32 * renderIndicesNew = new u32[mRenderIndicesCount + numAdditionalIndices];
-    memcpy(renderIndicesNew, mRenderVerts, sizeof(u32) * mRenderIndicesCount);
+    memcpy(renderIndicesNew, mRenderIndices, sizeof(u32) * mRenderIndicesCount);
     delete mRenderIndices;
     mRenderIndices = renderIndicesNew;
     mRenderIndicesCapacity = mRenderIndicesCount + numAdditionalIndices;
