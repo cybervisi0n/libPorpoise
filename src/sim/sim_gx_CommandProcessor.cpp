@@ -812,7 +812,9 @@ void CommandProcessor::ProcessCpReg(u8 regAddr, u32 value) {
                     auto& gxState = GetGlobalState();
                     u8 attr = regAddr - 0xA0 + GX_VA_POS;
                     auto array = gxState.GetVertexArray(static_cast<GXAttr>(attr));
+                    #ifdef LIBPORPOISE_32BIT
                     array.mArrayPtr = (u8*)value;
+                    #endif
                     gxState.SetVertexArray(static_cast<GXAttr>(attr), array);
                 } else if(regAddr >= 0xB0 && regAddr <= 0xBF) {
                     // Array stride
