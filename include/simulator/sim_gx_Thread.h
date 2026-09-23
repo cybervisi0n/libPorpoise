@@ -27,6 +27,7 @@ u32 SIM_GX_EndDisplayList();
 void SIM_GX_CommandProcessor_SetVertexArray(GXAttr attr, void * ptr, int stride);
 
 void SIM_GX_FlushFifo();
+void SIM_GX_FlushGl();
 void SIM_GX_WaitDrawDone();
 
 #ifdef __cplusplus

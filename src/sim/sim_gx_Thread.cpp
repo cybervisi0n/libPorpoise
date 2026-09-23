@@ -116,7 +116,6 @@ static constexpr auto InternalFifoBufferSendThreshold = 512;
 static u32 sInternalFifoBufferPos = 0;
 
 void FlushFifoBuffer() {
-    SDL_LockMutex(sFifoMutex);
     if(sInternalFifoBufferPos > 0) {
         ThreadMessage msg;
         msg.mType = ThreadMessageType::Fifo;
@@ -127,7 +126,6 @@ void FlushFifoBuffer() {
         sInternalFifoBufferPos = 0;
         sInternalFifoBuffer = new u8[InternalFifoBufferSize];
     }
-    SDL_UnlockMutex(sFifoMutex);
 }
 
 void FlushGlBuffer() {
@@ -170,7 +168,7 @@ void SendFifoMessage(T data) {
 
 
     // Add to the internal message buffer
-    SDL_LockMutex(sFifoMutex);
+    //SDL_LockMutex(sFifoMutex);
     if(sInternalFifoBuffer == nullptr) {
         sInternalFifoBuffer = new u8[InternalFifoBufferSize];
     }
@@ -181,7 +179,7 @@ void SendFifoMessage(T data) {
     if(sInternalFifoBufferPos >= InternalFifoBufferSendThreshold) {
         FlushFifoBuffer();
     }
-    SDL_UnlockMutex(sFifoMutex);
+    //SDL_UnlockMutex(sFifoMutex);
     //msg.mDataLen = dataLen;
 }
 
@@ -274,10 +272,14 @@ void SIM_GX_CommandProcessor_SetVertexArray(GXAttr attr, void * ptr, int stride)
     sMessageQueue.SendMessage(msg);
 }
 
+void SIM_GX_FlushGl() {
+    SIM::GX::FlushGlBuffer();
+}
+
 void SIM_GX_FlushFifo() {
     SIM::GX::FlushFifoBuffer();
 }
 
 void SIM_GX_WaitDrawDone() {
-    //SIM::GX::WaitDrawDone();
+    SIM::GX::WaitDrawDone();
 }

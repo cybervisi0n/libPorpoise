@@ -73,6 +73,7 @@ void GXFlush(void)
 	PPCSync();
 #ifdef LIBPORPOISE_PORT
 	SIM_GX_FlushFifo();
+	SIM_GX_FlushGl();
 #endif
 }
 

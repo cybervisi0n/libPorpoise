@@ -40,10 +40,10 @@ void HandlePostRetrace() {
 }
 
 void WaitForRetrace() {
-    if(SDL_GetThreadID(NULL) == GXGetCurrentSDLThreadID()) {
-        GX::FlushFifoBuffer();
-        GX::FlushGlBuffer();
-    }
+    //if(SDL_GetThreadID(NULL) == GXGetCurrentSDLThreadID()) {
+    //    GX::FlushFifoBuffer();
+    //    GX::FlushGlBuffer();
+    //}
     s_waitForRetraceCount++;
     SDL_mutex * dummy = SDL_CreateMutex();
     SDL_LockMutex(dummy);
