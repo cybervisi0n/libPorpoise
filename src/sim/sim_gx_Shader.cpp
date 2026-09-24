@@ -52,14 +52,49 @@ static constexpr std::array<const char *, GX_VA_MAX_ATTR> VertexAttributeStrings
     "nbt"
 };
 
-static std::string GetTypeName(GXAttrType descriptor, GXCompType type, GXCompCnt cnt) {
-    if(descriptor == GX_INDEX8 || descriptor == GX_INDEX16) {
+static std::string GetTypeName(GXAttrType descriptor, GXCompType type, GXCompCnt cnt, GXAttr attr) {
+    if(descriptor == GX_INDEX8 || descriptor == GX_INDEX16
+    || (attr >= GX_VA_TEX0MTXIDX && attr <= GX_VA_TEX7MTXIDX)) {
         return "uint";
     }
 
-    
+    if(attr == GX_VA_CLR0 || attr == GX_VA_CLR1) {
+        return "vec4";
+    }
 
-    return "notImplemented";
+    bool isSigned = false;
+    int numComponents = 1;
+
+    // GX_DIRECT
+    if((type == GX_S8) || (type == GX_S16)) {
+        isSigned = true;
+    }
+
+    if(attr >= GX_VA_TEX0 && attr <= GX_VA_TEX7) {
+        if(cnt == GX_TEX_ST) {
+            numComponents = 2;
+        }
+    } else if(attr == GX_VA_NRM) {
+        numComponents = 3;
+    } else {
+        if(cnt == GX_POS_XY) {
+            numComponents = 2;
+        } else {
+            numComponents = 3;
+        }
+    }
+
+    if(numComponents == 1 && type != GX_F32) {
+        return (isSigned ? "int" : "uint");
+    }
+
+    std::string vecString = "";
+
+    if(type != GX_F32) {
+        vecString += (isSigned ? "i" : "u");
+    }
+    vecString += std::format("vec{}", numComponents);
+    return vecString;
 }
 
 static bool CompileShader(GLuint& id, const char * source) {
@@ -101,9 +136,6 @@ static bool LinkShader(GLuint id,GLuint vertex,GLuint fragment) {
     glValidateProgram(id);
     glUseProgram(id);
 
-    //glGenVertexArrays(1, &gxVertexArray);
-    //glBindVertexArray(gxVertexArray);
-    //glGenBuffers(1, &gxVertexBuffer);
     return true;
 }
 
@@ -248,7 +280,8 @@ void Shader::GenerateVertexSource() {
         if(mDescriptors[attr] != GX_NONE) {
             mVertexSource += std::format("//layout (location = {}) in {} {};\n",
                 currentLoc, 
-                GetTypeName(mDescriptors[attr], mFormat.mAttributes[attr].mDataType, mFormat.mAttributes[attr].mComponents), 
+                GetTypeName(mDescriptors[attr], mFormat.mAttributes[attr].mDataType, 
+                            mFormat.mAttributes[attr].mComponents, static_cast<GXAttr>(attr)), 
                 VertexAttributeStrings[attr]);
             mAttrLocations[attr] = currentLoc;
             currentLoc++;
@@ -264,9 +297,9 @@ void Shader::GenerateVertexSource() {
     }
 
     // Add outputs
-    mVertexSource += "//smooth out vec3 rasc;\n\
-                      //smooth out float rasa;\n\
-                      //smooth out vec2 gxTexCoords[8 /* GX_MAX_TEXCOORD */];\n";
+    mVertexSource += "//smooth out vec3 rasc;\n"
+                     "//smooth out float rasa;\n"
+                     "//smooth out vec2 gxTexCoords[8 /* GX_MAX_TEXCOORD */];\n";
 
     printf("Compiling shader: \n%s\n\n=====\n", mVertexSource.c_str());
 
