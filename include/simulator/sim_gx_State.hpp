@@ -132,6 +132,7 @@ class GlobalState {
   inline u32 GetBpRegCache(u8 regId) const { return mBpRegCache[regId]; };
   inline GXPrimitive GetCurrentPrimitive() const {return mCurrentPrimitive;};
   inline GXAttrType GetVertexDescriptor(GXAttr attr) {return mVertexDescriptors[attr];};
+  inline const std::array<GXAttrType, GX_VA_MAX_ATTR>& GetVertexDescriptorArray() { return mVertexDescriptors; };
   inline const VertexFormat& GetCurrentVertexFormat() {return mVertexFormats[mCurrentVertexFormat];};
   inline const VertexArray& GetVertexArray(GXAttr attr) {return mVertexArrays[attr];};
   inline const VertexFormat& GetVertexFormat(GXVtxFmt formatIdx) {return mVertexFormats[formatIdx];};
@@ -178,6 +179,8 @@ class GlobalState {
   inline void SetInitialTevColorsDirty(bool dirty) {mInitialTevColorsDirty = dirty;};
   inline bool GetIsMatrixIndexDirty() {return mMatrixIndexDirty; };
   inline void SetMatrixIndexDirty(bool dirty) {mMatrixIndexDirty = dirty;};
+  inline bool GetIsVertexAttributesDirty() { return mVertexAttributesDirty; };
+  inline void SetVertexAttributesDirty(bool dirty) { mVertexAttributesDirty = dirty; };
   inline const Light* GetLightsArray() { return mLights.data(); };
   inline const ColorChannel* GetColorChannelArray() { return mColorChannels.data(); };
   inline Light& GetLight(GXLightID lightId) { return mLights[lightId]; };
@@ -201,7 +204,12 @@ class GlobalState {
   };
   inline void SetCurrentVertexFormat(GXVtxFmt format) {mCurrentVertexFormat = format;};
   inline void SetVertexArray(GXAttr attr, VertexArray array) {mVertexArrays[attr] = array;};
-  inline void SetVertexDescriptor(GXAttr attr, GXAttrType descType) {mVertexDescriptors[attr] = descType;};
+  inline void SetVertexDescriptor(GXAttr attr, GXAttrType descType) {
+    if(mVertexDescriptors[attr] != descType) {
+      mVertexDescriptors[attr] = descType;
+      mVertexAttributesDirty = true;
+    }
+  };
   inline void SetVertexFormatComponents(GXVtxFmt formatIndex, GXAttr attrIndex, GXCompCnt component) {
     mVertexFormats[formatIndex].mAttributes[attrIndex].mComponents = component;
   };
@@ -296,6 +304,7 @@ class GlobalState {
   bool mNumTevStagesDirty = true;
   bool mInitialTevColorsDirty = true;
   bool mMatrixIndexDirty = true;
+  bool mVertexAttributesDirty = true;
 };
 
 void InitGlobalState();

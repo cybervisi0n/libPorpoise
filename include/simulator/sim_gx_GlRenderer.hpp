@@ -6,6 +6,8 @@
 #include <dolphin/types.h>
 #include <dolphin/gx/GXEnum.h>
 
+#include "simulator/sim_gx_Shader.hpp"
+
 namespace SIM::GX {
 
 struct RenderVertex;
@@ -73,6 +75,9 @@ class GlRenderer {
 
   int mBatchableDrawcalls = 0;
   int mTotalDrawcalls = 0;
+
+  ShaderCache * mShaderCache;
+  std::shared_ptr<Shader> mCurrentShader;
 };
 
 GlRenderer& GetGlRenderer();

@@ -41,68 +41,7 @@ GLenum glErrCode;
 GLint status;
 GLint logSize = 0;
 void * errorBuf;
-static GLuint gxVertexArray;
-static GLuint gxVertexBuffer;
 
-static bool CompileShaderCommon(GLuint& id, const char * source) {
-    glShaderSource( id, 1, &source, NULL );
-    glCompileShader( id );
-    glGetShaderiv(id, GL_COMPILE_STATUS, &status);
-    if( status != GL_TRUE )
-    {
-        glGetShaderiv(id, GL_INFO_LOG_LENGTH, &logSize);
-        errorBuf = malloc( logSize * sizeof( GLchar ) );
-        glGetShaderInfoLog(id, logSize, &logSize, (GLchar *)errorBuf);
-        std::string errorMessageString = "Error compiling shader:\n" + std::string((char*)errorBuf);
-        SDL_ShowSimpleMessageBox(0, "Error compiling shader", errorMessageString.c_str(), window);
-        free( errorBuf );
-        return false;
-    }
-    return true;
-}
-
-static bool CompileVertexShader(GLuint& id, const char * source) {
-    id = glCreateShader(GL_VERTEX_SHADER);
-    return CompileShaderCommon(id, source);
-}
-
-
-static bool CompileFragmentShader(GLuint& id, const char * source) {
-    id = glCreateShader(GL_FRAGMENT_SHADER);
-    return CompileShaderCommon(id,source);
-
-}
-
-static bool LinkShader(GLuint id,GLuint vertex,GLuint fragment) {
-    glAttachShader( id, vertex );
-    glAttachShader( id, fragment );
-    glLinkProgram( id );
-    glErrCode = glGetError();
-    glGetProgramiv( id, GL_LINK_STATUS, &status );
-    if( status != GL_TRUE )
-    {
-        glGetProgramiv(id, GL_INFO_LOG_LENGTH, &logSize);
-        errorBuf = malloc( logSize * sizeof( GLchar ) );
-        glGetProgramInfoLog(id, logSize, &logSize, (GLchar *)errorBuf);
-        glErrCode = glGetError();
-        std::string errorMessageString = "Error linking shader:\n" + std::string((char*)errorBuf);
-        SDL_ShowSimpleMessageBox(0, "Error linking shader", errorMessageString.c_str(), window);
-        free( errorBuf );
-        return false;
-    }
-    glValidateProgram(id);
-    glUseProgram(id);
-
-    glGenVertexArrays(1, &gxVertexArray);
-    glBindVertexArray(gxVertexArray);
-    glGenBuffers(1, &gxVertexBuffer);
-    return true;
-}
-
-
-static GLuint gxShaderProgramId;
-static GLuint gxVertexShader;
-static GLuint gxFragmentShader;
 
 extern "C" {
 void DolphinMain();
@@ -176,7 +115,6 @@ bool AcquireRenderContext(void) {
         SDL_UnlockMutex(s_renderContextMutex);
         return FALSE;
     }
-    glUseProgram(gxShaderProgramId);
     //SIM::GX::GetGlRenderer().SetShaderProgram(gxShaderProgramId);
     s_renderContextThread = currentThread;
     //UpdateDrawableViewport();
@@ -308,18 +246,6 @@ int main(int argc, char** argv) {
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f );
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-
-    gxShaderProgramId = glCreateProgram();
-    bool vertexShaderStatus = CompileVertexShader(gxVertexShader, SIM_GXVertexShader);
-    bool fragmentShaderStatus = CompileFragmentShader(gxFragmentShader, SIM_GXFragmentShader);
-    if(!vertexShaderStatus || !fragmentShaderStatus) {
-        return -1;
-    }
-    bool linkStatus = LinkShader(gxShaderProgramId, gxVertexShader, gxFragmentShader);
-    if(!linkStatus) {
-        return -1;
-    }
-    glUseProgram(gxShaderProgramId);
 
     SIM::Memory::Init();
     SIM::ARAM::Init();

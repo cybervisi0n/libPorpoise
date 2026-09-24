@@ -8,6 +8,7 @@
 
 #include <simulator/glad/glad.h>
 #include <simulator/sim_gx_Geometry.hpp>
+#include <simulator/sim_gx_Shader.hpp>
 #include <simulator/sim_gx_State.hpp>
 #include <simulator/sim_gx_TextureManager.hpp>
 #ifdef TRACY_ENABLE
@@ -149,31 +150,19 @@ void GlRenderer::Initialize() {
     GLint shaderProgram = 0;
     glGetIntegerv(GL_CURRENT_PROGRAM, &shaderProgram);
 
-    mProjectionLocation = glGetUniformLocation(static_cast<GLuint>(shaderProgram), "u_projection");
-    mNormalMtxLocation = glGetUniformLocation(static_cast<GLuint>(shaderProgram), "u_normalMtx");
-    mNumTexGenLocation = glGetUniformLocation(static_cast<GLuint>(shaderProgram), "u_numTexGens");
-    for(int i=0; i < GX_MAX_TEXCOORD; i++) {
-        mTexGenMatrixLocation[i] = glGetUniformLocation(static_cast<GLuint>(shaderProgram), std::format("u_texGens[{}].mMatrixId", i).c_str());
-        mTexGenTypeLocation[i] = glGetUniformLocation(static_cast<GLuint>(shaderProgram), std::format("u_texGens[{}].mType", i).c_str());
-    }
+    // Create default shader
+    auto& gxState = GetGlobalState();
+    const auto& curFormat = gxState.GetCurrentVertexFormat();
+    const auto& curDescriptors = gxState.GetVertexDescriptorArray();
+    mCurrentShader = std::make_shared<Shader>(
+        curFormat, 
+        curDescriptors,
+        mTevStageUniformBuffer,
+        mLightsUniformBuffer,
+        mMatrixMemoryUniformBuffer);
+    mCurrentShader->Activate();
 
-
-    mTevTexMapLocation = glGetUniformLocation(static_cast<GLuint>(shaderProgram), "tevTexMaps");
-    mTevStageConfigsBinding = 0;
-    glUniformBlockBinding(shaderProgram, mTevStageConfigsBlock, mTevStageConfigsBinding);
-    mLightConfigBlock = glGetUniformBlockIndex(shaderProgram, "lightConfigBlock");
-    mLightConfigBlockBinding = 1;
-    glUniformBlockBinding(shaderProgram, mLightConfigBlock, mLightConfigBlockBinding);
-    mMatrixMemoryBlock = glGetUniformBlockIndex(shaderProgram, "matrixMemoryBlock");
-    mMatrixMemoryBlockBinding = 2;
-    glUniformBlockBinding(shaderProgram, mMatrixMemoryBlock, mMatrixMemoryBlockBinding);
-    mInitialTevColorsLocation =
-        glGetUniformLocation(static_cast<GLuint>(shaderProgram), "initialTevColors");
-    mNumTevStagesLocation =
-        glGetUniformLocation(static_cast<GLuint>(shaderProgram), "numTevStages");
-    mNumChansLocation = glGetUniformLocation(static_cast<GLuint>(shaderProgram), "u_numChans");
-    mMtxIdxALocation = glGetUniformLocation(static_cast<GLuint>(shaderProgram), "mtxIdxA");
-    mPnMtxIdxEnabledLocation = glGetUniformLocation(static_cast<GLuint>(shaderProgram), "pnMtxIdxEnabled");
+    mShaderCache = new ShaderCache();
 }
 
 void GlRenderer::Draw(const RenderVertex * vertices, size_t numVertices, GXPrimitive primitive) {
@@ -222,6 +211,7 @@ void GlRenderer::Draw(const RenderVertex * vertices, size_t numVertices, GXPrimi
     bool batchable = true;
 
     if(
+        gxState.GetIsVertexAttributesDirty() ||
         gxState.GetIsTextureDirty() ||
         gxState.GetIsDepthDirty() ||
         gxState.GetIsProjectionMatrixDirty() ||
@@ -241,6 +231,45 @@ void GlRenderer::Draw(const RenderVertex * vertices, size_t numVertices, GXPrimi
         // This Drawcall is not batchable. Flush mRenderVerts now
         batchable = false;
         FlushRenderVerts();
+    }
+
+    if(gxState.GetIsVertexAttributesDirty()) {
+        // do the shader cache stuff and load new shader
+        const auto& curFormat = gxState.GetCurrentVertexFormat();
+        const auto& curDescriptors = gxState.GetVertexDescriptorArray();
+        mCurrentShader = mShaderCache->GetShader(curFormat, curDescriptors);
+        if(mCurrentShader == nullptr) {
+            // Create the shader
+            mCurrentShader = std::make_shared<Shader>(
+                curFormat, 
+                curDescriptors,
+                mTevStageUniformBuffer,
+                mLightsUniformBuffer,
+                mMatrixMemoryUniformBuffer);
+            mShaderCache->AddShader(curFormat, curDescriptors, mCurrentShader);
+        }
+
+        mCurrentShader->Activate();
+
+        // All uniforms will need to be set again with the new shader program
+        // Mark all uniforms dirty
+        gxState.SetTextureDirty(true);
+        gxState.SetDepthDirty(true);
+        gxState.SetProjectionMatrixDirty(true);
+        gxState.SetTexGenDirty(true);
+        gxState.SetTevDirty(true);
+        gxState.SetTevTexMapDirty(true);
+        gxState.SetLightsDirty(true);
+        gxState.SetPosTextureMtxDirty(true);
+        gxState.SetNormalMtxDirty(true);
+        gxState.SetNumChannelsDirty(true);
+        gxState.SetNumTevStagesDirty(true);
+        gxState.SetInitialTevColorsDirty(true);
+        gxState.SetMatrixIndexDirty(true);
+
+        // When an application changes the vertex attributes this can be a very expensive operation
+
+        gxState.SetVertexAttributesDirty(false);
     }
 
     if(gxState.GetIsTextureDirty()) {
@@ -294,98 +323,67 @@ void GlRenderer::Draw(const RenderVertex * vertices, size_t numVertices, GXPrimi
     //glUseProgram(shaderProgram);
 
     if(gxState.GetIsProjectionMatrixDirty()) {
-        glUniformMatrix4fv(
-            mProjectionLocation,
-            1,
-            GL_TRUE,
-            gxState.GetProjectionMatrix().data());
+        mCurrentShader->SetProjectionMatrix(gxState.GetProjectionMatrix().data());
         gxState.SetProjectionMatrixDirty(false);
     }
 
     if(gxState.GetIsTexGenDirty()) {
-        glUniform1ui(mNumTexGenLocation, gxState.GetNumTexGens());
+        mCurrentShader->SetNumTexGens(gxState.GetNumTexGens());
         for(int i=0; i < GX_MAX_TEXCOORD; i++) {
-            glUniform1ui(mTexGenMatrixLocation[i], gxState.GetTexGenArray()[i].mMatrixId);
-            glUniform1ui(mTexGenTypeLocation[i], gxState.GetTexGenArray()[i].mType);
+            mCurrentShader->SetTexGen(gxState.GetTexGenArray()[i], i);
         }
         gxState.SetTexGenDirty(false);
     }
 
 
     if(gxState.GetIsTevTexMapDirty()) {
-        glUniform1iv(mTevTexMapLocation, GX_MAX_TEVSTAGE, (const GLint*)gxState.GetTevTexMapArray());
+        mCurrentShader->SetTevTexMaps(gxState.GetTevTexMapArray());
         gxState.SetTevTexMapDirty(false);
     }
     
 
     if(gxState.GetTevDirty()) {
-        glBindBuffer(GL_UNIFORM_BUFFER, mTevStageUniformBuffer);
-        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(TevStageConfig) * GX_MAX_TEVSTAGE, gxState.GetTevStageConfigArray());
-        glBindBufferBase(GL_UNIFORM_BUFFER, mTevStageConfigsBinding, mTevStageUniformBuffer);
-        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+        mCurrentShader->SetTevStageConfigs(gxState.GetTevStageConfigArray());
         gxState.SetTevDirty(false);
     }
 
     //upload matrix memory position + texture
     if(gxState.GetIsPosTextureMtxDirty() || gxState.GetIsNormalMtxDirty()) {
-        glBindBuffer(GL_UNIFORM_BUFFER, mMatrixMemoryUniformBuffer);
-        //const float * matrixMem = gxState.GetXfMemoryPointer();
-        glBufferSubData(GL_UNIFORM_BUFFER, 0, 240 * sizeof(float), gxState.GetXfMemoryPointer());
-        glBindBufferBase(GL_UNIFORM_BUFFER, mMatrixMemoryBlockBinding, mMatrixMemoryUniformBuffer);
-        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+        mCurrentShader->SetPosTextureMatrixMem(gxState.GetXfMemoryPointer());
         gxState.SetPosTextureMtxDirty(false);
     }
 
     if(gxState.GetIsNormalMtxDirty()) {
         // upload matrix memory normal mtx
-        glBindBuffer(GL_UNIFORM_BUFFER, mMatrixMemoryUniformBuffer);
-        const float * matrixMem = gxState.GetXfMemoryPointer() + 0x400;
-        float normalMatrices[30][4] = {};
-        for(int i=0; i < 30; i++) {
-            normalMatrices[i][0] = matrixMem[(3*i)];
-            normalMatrices[i][1] = matrixMem[(3*i) + 1];
-            normalMatrices[i][2] = matrixMem[(3*i) + 2];
-            normalMatrices[i][3] = 0.0f;
-        }
-        glBufferSubData(GL_UNIFORM_BUFFER, 240 * sizeof(float), sizeof(normalMatrices), normalMatrices);
-        //int glError = glGetError();
-        //if(glError != GL_NO_ERROR) {
-        //    printf("Error sending normal matrix data %d\n", glError);
-        //}
-        glBindBufferBase(GL_UNIFORM_BUFFER, mMatrixMemoryBlockBinding, mMatrixMemoryUniformBuffer);
-        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+        mCurrentShader->SetNormalMatrixMem(gxState.GetXfMemoryPointer());
         gxState.SetNormalMtxDirty(false);
     }
 
     // pass lights data
     if(gxState.GetIsLightsDirty()) {
-        glBindBuffer(GL_UNIFORM_BUFFER, mLightsUniformBuffer);
-        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Light) * 8, gxState.GetLightsArray());
-        glBufferSubData(GL_UNIFORM_BUFFER, sizeof(Light) * 8, sizeof(ColorChannel) * 4, gxState.GetColorChannelArray());
-        glBindBufferBase(GL_UNIFORM_BUFFER, mLightConfigBlockBinding, mLightsUniformBuffer);
-        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+        mCurrentShader->SetLights(gxState.GetLightsArray(), gxState.GetColorChannelArray());
         gxState.SetLightsDirty(false);
     }
 
     if(gxState.GetIsMatrixIndexDirty()) {
-        glUniform1ui(mMtxIdxALocation, gxState.GetCurrentPositionMtxIdx());
+        mCurrentShader->SetMatrixIndex(gxState.GetCurrentPositionMtxIdx());
         gxState.SetMatrixIndexDirty(false);
     }
 
-    glUniform1ui(mPnMtxIdxEnabledLocation, gxState.GetVertexDescriptor(GX_VA_PNMTXIDX) != GX_NONE);
+    //glUniform1ui(mPnMtxIdxEnabledLocation, gxState.GetVertexDescriptor(GX_VA_PNMTXIDX) != GX_NONE);
 
     if(gxState.GetIsNumChannelsDirty()) {
-        glUniform1ui(mNumChansLocation, gxState.GetNumChannels());
+        mCurrentShader->SetNumChannels(gxState.GetNumChannels());
         gxState.SetNumChannelsDirty(false);
     }
 
     if(gxState.GetIsInitialTevColorsDirty()) {
-        glUniform4fv(mInitialTevColorsLocation, 4, gxState.GetInitialTevColorsArray());
+        mCurrentShader->SetInitialTevColors(gxState.GetInitialTevColorsArray());
         gxState.SetInitialTevColorsDirty(false);
     }
 
     if(gxState.GetIsNumTevStagesDirty()) {
-        glUniform1ui(mNumTevStagesLocation, gxState.GetNumTevStages());
+        mCurrentShader->SetNumTevStages(gxState.GetNumTevStages());
         gxState.SetNumTevStagesDirty(false);
     }
 }
