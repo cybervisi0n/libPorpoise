@@ -1,11 +1,4 @@
 R""(
-layout (location = 0) in vec3 position;
-layout (location = 1) in vec3 normal;
-layout (location = 2) in vec4 vertex_color;
-layout (location = 3) in vec2 texCoords;
-layout (location = 4) in uint posNormalMtxIdx;
-layout (location = 5) in uvec4 texMtxIdx0;
-layout (location = 6) in uvec4 texMtxIdx1;
 
 struct Light {
   vec4 mPosition;
@@ -118,9 +111,9 @@ mat3 GetNormalMatrix(uint row) {
 
 uint GetTexMtxIdx(uint texId) {
     uint idx = 0u;
-    uvec4 texIdxs = texMtxIdx0;
+    uvec4 texIdxs = genTexMtxIdx0;
     if(texId > 3u) {
-        texIdxs = texMtxIdx1;
+        texIdxs = genTexMtxIdx1;
         texId = texId - 3u;
     }
 
@@ -196,7 +189,7 @@ vec4 ProcessChannel(uint chan) {
         materialColor = u_colorChannels[colorChannelNum].mMaterialColor.rgb;
     } else {
         /* GX_SRC_VTX */
-        materialColor = vertex_color.rgb;
+        materialColor = genColor0.rgb;
     }
 
     // Do the Light Func
@@ -209,7 +202,7 @@ vec4 ProcessChannel(uint chan) {
             ambientColor = u_colorChannels[colorChannelNum].mAmbientColor.rgb;
         } else {
             /* GX_SRC_VTX */
-            ambientColor = vertex_color.rgb;
+            ambientColor = genColor0.rgb;
         }
 
         // Now we actually need to sum up the lights
@@ -217,7 +210,7 @@ vec4 ProcessChannel(uint chan) {
         for(uint lightNum = 0u; lightNum < 8u; lightNum++) {
             if((u_colorChannels[colorChannelNum].mLightMask & (1u << lightNum)) > 0u) {
                 // This light is enabled
-                vec3 lightDistance = u_lights[lightNum].mPosition.xyz - position;
+                vec3 lightDistance = u_lights[lightNum].mPosition.xyz - genPosition;
                 float dist2 = dot(lightDistance, lightDistance);
                 float dist = sqrt(dist2);
                 lightDistance = lightDistance / dist;
@@ -277,7 +270,7 @@ vec4 ProcessChannel(uint chan) {
         materialAlpha = u_colorChannels[alphaChannelNum].mMaterialColor.a;
     } else {
         /* GX_SRC_VTX */
-        materialAlpha = vertex_color.a;
+        materialAlpha = genColor0.a;
     }
 
     // Do the Light Func
@@ -290,7 +283,7 @@ vec4 ProcessChannel(uint chan) {
             ambientAlpha = u_colorChannels[alphaChannelNum].mAmbientColor.a;
         } else {
             /* GX_SRC_VTX */
-            ambientAlpha = vertex_color.a;
+            ambientAlpha = genColor0.a;
         }
 
         // Now we actually need to sum up the lights
@@ -298,7 +291,7 @@ vec4 ProcessChannel(uint chan) {
         for(uint lightNum = 0u; lightNum < 8u; lightNum++) {
             if((u_colorChannels[alphaChannelNum].mLightMask & (1u << lightNum)) > 0u) {
                 // This light is enabled
-                vec3 lightDistance = u_lights[lightNum].mPosition.xyz - position;
+                vec3 lightDistance = u_lights[lightNum].mPosition.xyz - genPosition;
                 float dist2 = dot(lightDistance, lightDistance);
                 float dist = sqrt(dist2);
                 lightDistance = lightDistance / dist;
@@ -347,18 +340,12 @@ vec4 ProcessChannel(uint chan) {
     return channelColor;
 }
 
-void main()
+void ConstMain()
 {
-    uint modelViewRow = 0u;
-    if(pnMtxIdxEnabled > 0u) {
-        modelViewRow = posNormalMtxIdx;
-    } else {
-        modelViewRow = mtxIdxA;
-    }
-    mat4 modelView = GetPositionMatrix(modelViewRow);
-    gl_Position = u_projection * modelView * vec4(position, 1.0);
+    mat4 modelView = GetPositionMatrix(genPosNormalMtxIdx);
+    gl_Position = u_projection * modelView * vec4(genPosition, 1.0);
 
-    calculatedNormal = normalize(GetNormalMatrix(modelViewRow) * normal);
+    calculatedNormal = normalize(GetNormalMatrix(genPosNormalMtxIdx) * genNormal);
 
     //if(dot(calculatedNormal, calculatedNormal) > 1e-10) {
     //    calculatedNormal = normalize(calculatedNormal);
@@ -379,7 +366,9 @@ void main()
     rasa = channelColors[0].a + channelColors[1].a;
 
     for(uint i=0u; i<u_numTexGens; i++) {
-        gxTexCoords[i] = GenerateTexCoords(texCoords, u_texGens[i].mMatrixId, u_texGens[i].mType);
+        gxTexCoords[i] = GenerateTexCoords(genTexCoords, u_texGens[i].mMatrixId, u_texGens[i].mType);
     }
 }
+
+// main() will be generated below this line
 )""

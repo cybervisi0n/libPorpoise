@@ -38,6 +38,50 @@ GLenum ToGlPrimitive(GXPrimitive primitive) {
     }
 }
 
+static int GetGlType(GXAttr attr, GXCompType compType, GXAttrType descriptor) {
+    if(descriptor == GX_INDEX8) {
+        return GL_UNSIGNED_BYTE;
+    } else if(descriptor == GX_INDEX16) {
+        return GL_UNSIGNED_SHORT;
+    }
+
+    switch(compType) {
+        case GX_U8:
+            return GL_UNSIGNED_BYTE;
+        case GX_U16:
+            return GL_UNSIGNED_SHORT;
+        default:
+            break;
+    }
+    
+    return GL_FLOAT;
+}
+
+static int GetNumComponents(GXAttr attr) {
+    auto& gxState = SIM::GX::GetGlobalState();
+    auto& attrStruct = gxState.GetCurrentVertexFormat().mAttributes[attr];
+    switch(attr) {
+        case GX_VA_POS:
+            return gxState.GetNumPositionComponents(attrStruct.mComponents);
+        case GX_VA_NRM:
+            return gxState.GetNumNormalComponents(attrStruct.mComponents);
+        case GX_VA_CLR0:
+        case GX_VA_CLR1:
+            return gxState.GetNumColorComponents(attrStruct.mComponents);
+        case GX_VA_TEX0:
+        case GX_VA_TEX1:
+        case GX_VA_TEX2:
+        case GX_VA_TEX3:
+        case GX_VA_TEX4:
+        case GX_VA_TEX5:
+        case GX_VA_TEX6:
+        case GX_VA_TEX7:
+            return gxState.GetNumTexCoordComponents(attrStruct.mComponents);
+        default:
+            return 1;
+    }
+}
+
 }
 
 namespace SIM::GX {
@@ -47,7 +91,7 @@ void GlRenderer::Initialize() {
         return;
     }
 
-    mRenderVerts = new RenderVertex[InitialRenderVertsCapacity];
+    mRenderVerts = new u8[InitialRenderVertsCapacity * GetGlobalState().GetNumBytesPerVertex()];
     mRenderVertsCount = 0;
     mRenderVertsCapacity = InitialRenderVertsCapacity;
     mRenderIndices = new u32[InitialRenderVertsCapacity];
@@ -59,6 +103,7 @@ void GlRenderer::Initialize() {
     glBindVertexArray(mVertexArray);
     glBindBuffer(GL_ARRAY_BUFFER, mVertexBuffer);
 
+    /*
     //location = 0 in vec3 position
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(
@@ -122,7 +167,7 @@ void GlRenderer::Initialize() {
         GL_FALSE,
         sizeof(RenderVertex),
         reinterpret_cast<void*>(offsetof(RenderVertex, texMtxIdx) + (4 * sizeof(u32))));
-
+    */
     // Element buffer
     glGenBuffers(1, &mElementBuffer);
     
@@ -165,7 +210,7 @@ void GlRenderer::Initialize() {
     mShaderCache = new ShaderCache();
 }
 
-void GlRenderer::Draw(const RenderVertex * vertices, size_t numVertices, GXPrimitive primitive) {
+void GlRenderer::Draw(const u8 * vertices, size_t numVertices, GXPrimitive primitive) {
     #ifdef TRACY_ENABLE
     ZoneScoped;
     #endif
@@ -251,6 +296,53 @@ void GlRenderer::Draw(const RenderVertex * vertices, size_t numVertices, GXPrimi
 
         mCurrentShader->Activate();
 
+        glBindVertexArray(mVertexArray);
+        glBindBuffer(GL_ARRAY_BUFFER, mVertexBuffer);
+
+        // Disable all the attributes first
+        for(int i=0; i < GL_MAX_VERTEX_ATTRIBS; i++) {
+            glDisableVertexAttribArray(i);
+        }
+
+        // Set up the GL vertex attributes
+        auto pnMtxAttrIdx = mCurrentShader->GetGlVertexAttrIdx(GX_VA_PNMTXIDX);
+        if(pnMtxAttrIdx.has_value()) {
+            glEnableVertexAttribArray(pnMtxAttrIdx.value());
+            glVertexAttribPointer(
+                pnMtxAttrIdx.value(),
+                1, // num components
+                GetGlType(GX_VA_PNMTXIDX, gxState.GetCurrentVertexFormat().mAttributes[GX_VA_PNMTXIDX].mDataType, gxState.GetVertexDescriptor(GX_VA_PNMTXIDX)), // get the correct type
+                GL_FALSE,
+                gxState.GetNumBytesPerVertex(),
+                (void*)gxState.GetNumBytesPerVertex(GX_VA_PNMTXIDX));            
+        }
+
+        ProcessIndexableAttribute(GX_VA_POS);
+        ProcessIndexableAttribute(GX_VA_NRM);
+        ProcessIndexableAttribute(GX_VA_CLR0);
+        ProcessIndexableAttribute(GX_VA_CLR1);
+        ProcessIndexableAttribute(GX_VA_TEX0);
+        ProcessIndexableAttribute(GX_VA_TEX1);
+        ProcessIndexableAttribute(GX_VA_TEX2);
+        ProcessIndexableAttribute(GX_VA_TEX3);
+        ProcessIndexableAttribute(GX_VA_TEX4);
+        ProcessIndexableAttribute(GX_VA_TEX5);
+        ProcessIndexableAttribute(GX_VA_TEX6);
+        ProcessIndexableAttribute(GX_VA_TEX7);
+
+        // notes: possibly consider storing the VAO with the shader object so these calculations only need done once (butt hat would mean Shader class does non-shader things)
+
+        // do this for the remaining attributes
+
+        // then refactor Draw() to take in the raw byte stream
+
+        //int numTexMtxIdx = 0;
+        //for(int i= GX_VA_TEX0MTXIDX; i<= GX_VA_TEX7MTXIDX; i++) {
+        //    if(gxState.GetVertexDescriptor(static_cast<GXAttr>(i)) != GX_NONE) {
+        //        numTexMtxIdx++;
+        //    }
+        //}
+
         // All uniforms will need to be set again with the new shader program
         // Mark all uniforms dirty
         gxState.SetTextureDirty(true);
@@ -303,7 +395,7 @@ void GlRenderer::Draw(const RenderVertex * vertices, size_t numVertices, GXPrimi
         ExpandTriangleStrip(vertices, numVertices);  
     } else {
         ReserveRenderVerts(numVertices);
-        memcpy(&mRenderVerts[mRenderVertsCount], vertices, sizeof(RenderVertex) * numVertices);
+        memcpy(&mRenderVerts[mRenderVertsCount * GetGlobalState().GetNumBytesPerVertex()], vertices, GetGlobalState().GetNumBytesPerVertex() * numVertices);
         mRenderVertsCount += numVertices;
     }
 
@@ -405,11 +497,11 @@ bool GlRenderer::IsIndexed(GXPrimitive prim) {
 }
 
 void GlRenderer::ExpandQuads(
-    const SIM::GX::RenderVertex * vertices, size_t numVertices) {
+    const u8 * vertices, size_t numVertices) {
     int numVertsOut = (numVertices / 4) * 6;
     ReserveRenderVerts(numVertices);
-    SIM::GX::RenderVertex * renderVertsOut = &mRenderVerts[mRenderVertsCount];
-    std::memcpy(renderVertsOut, vertices, sizeof(SIM::GX::RenderVertex) * numVertices);
+    u8 * renderVertsOut = &mRenderVerts[mRenderVertsCount * GetGlobalState().GetNumBytesPerVertex() ];
+    std::memcpy(renderVertsOut, vertices, GetGlobalState().GetNumBytesPerVertex() * numVertices);
     u32 oldVertexCount = mRenderVertsCount;
     mRenderVertsCount += numVertices;
 
@@ -429,10 +521,10 @@ void GlRenderer::ExpandQuads(
 }
 
 void GlRenderer::ExpandQuadStrip(
-    const SIM::GX::RenderVertex * vertices, size_t numVertices) {
+    const u8 * vertices, size_t numVertices) {
     ReserveRenderVerts(numVertices);
-    SIM::GX::RenderVertex * renderVertsOut = &mRenderVerts[mRenderVertsCount];
-    std::memcpy(renderVertsOut, vertices, sizeof(SIM::GX::RenderVertex) * numVertices);
+    u8 * renderVertsOut = &mRenderVerts[mRenderVertsCount * GetGlobalState().GetNumBytesPerVertex() ];
+    std::memcpy(renderVertsOut, vertices, GetGlobalState().GetNumBytesPerVertex() * numVertices);
     u32 oldVertexCount = mRenderVertsCount;
     mRenderVertsCount += numVertices;
 
@@ -463,10 +555,10 @@ void GlRenderer::ExpandQuadStrip(
 }
 
 void GlRenderer::ExpandTriangleStrip(
-    const SIM::GX::RenderVertex * vertices, size_t numVertices) {
+    const u8 * vertices, size_t numVertices) {
     ReserveRenderVerts(numVertices);
-    SIM::GX::RenderVertex * renderVertsOut = &mRenderVerts[mRenderVertsCount];
-    std::memcpy(renderVertsOut, vertices, sizeof(SIM::GX::RenderVertex) * numVertices);
+    u8 * renderVertsOut = &mRenderVerts[mRenderVertsCount * GetGlobalState().GetNumBytesPerVertex()];
+    std::memcpy(renderVertsOut, vertices, GetGlobalState().GetNumBytesPerVertex()  * numVertices);
     u32 oldVertexCount = mRenderVertsCount;
     mRenderVertsCount += numVertices;
 
@@ -502,8 +594,10 @@ void GlRenderer::ReserveRenderVerts(int numAdditionalVerts) {
         return;
     }
 
-    RenderVertex * renderVertsNew = new RenderVertex[mRenderVertsCount + numAdditionalVerts];
-    memcpy(renderVertsNew, mRenderVerts, sizeof(RenderVertex) * mRenderVertsCount);
+    auto bytesPerVertex = GetGlobalState().GetNumBytesPerVertex();
+
+    u8 * renderVertsNew = new u8[(mRenderVertsCount + numAdditionalVerts) * bytesPerVertex];
+    memcpy(renderVertsNew, mRenderVerts, bytesPerVertex * mRenderVertsCount);
     delete mRenderVerts;
     mRenderVerts = renderVertsNew;
     mRenderVertsCapacity = mRenderVertsCount + numAdditionalVerts;
@@ -533,7 +627,7 @@ void GlRenderer::FlushRenderVerts() {
     if(mVboCapacity < mRenderVertsCount) {
         glBufferData(
             GL_ARRAY_BUFFER,
-            static_cast<GLsizeiptr>(mRenderVertsCount * sizeof(RenderVertex)),
+            static_cast<GLsizeiptr>(mRenderVertsCount * GetGlobalState().GetNumBytesPerVertex()),
             mRenderVerts,
             GL_STREAM_DRAW);
         mVboCapacity = mRenderVertsCount;
@@ -541,7 +635,7 @@ void GlRenderer::FlushRenderVerts() {
         glBufferSubData(
             GL_ARRAY_BUFFER,
             0,
-            static_cast<GLsizeiptr>(mRenderVertsCount * sizeof(RenderVertex)),
+            static_cast<GLsizeiptr>(mRenderVertsCount * GetGlobalState().GetNumBytesPerVertex()),
             mRenderVerts
         );
     }
@@ -574,6 +668,31 @@ void GlRenderer::FlushRenderVerts() {
     
     mRenderVertsCount = 0;
     mRenderIndicesCount = 0;
+}
+
+void GlRenderer::ProcessIndexableAttribute(GXAttr attr) {
+    auto& gxState = GetGlobalState();
+    auto attrIdx = mCurrentShader->GetGlVertexAttrIdx(attr);
+    if(attrIdx.has_value()) {
+        glEnableVertexAttribArray(attrIdx.value());
+        auto descriptor = gxState.GetVertexDescriptor(attr);
+        if(descriptor == GX_INDEX8 || descriptor == GX_INDEX16) {
+            glVertexAttribIPointer(
+                attrIdx.value(),
+                1, // num components
+                GetGlType(attr, gxState.GetCurrentVertexFormat().mAttributes[attr].mDataType, gxState.GetVertexDescriptor(attr)), // get the correct type
+                gxState.GetNumBytesPerVertex(),
+                (void*)gxState.GetNumBytesPerVertex(attr)); 
+        } else {
+            glVertexAttribPointer(
+                attrIdx.value(),
+                GetNumComponents(attr), // num components
+                GetGlType(attr, gxState.GetCurrentVertexFormat().mAttributes[attr].mDataType, gxState.GetVertexDescriptor(attr)), // get the correct type
+                GL_FALSE,
+                gxState.GetNumBytesPerVertex(),
+                (void*)gxState.GetNumBytesPerVertex(attr)); 
+        }           
+    }
 }
 
 GlRenderer& GetGlRenderer() {

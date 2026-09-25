@@ -96,7 +96,7 @@ size_t GlobalState::GetDescriptorSize(GXAttrType descriptorType, GXCompType data
     }
 }
 
-size_t GlobalState::GetNumBytesPerVertex() {
+size_t GlobalState::GetNumBytesPerVertex(const GXAttr maxAttr) {
     size_t totalBytes = 0;
     auto& format = mVertexFormats[mCurrentVertexFormat];
 
@@ -115,20 +115,41 @@ size_t GlobalState::GetNumBytesPerVertex() {
             return components * GetDescriptorSize(descriptor, format.mAttributes[attr].mDataType, colorType);
     };
 
-    totalBytes += HandleAttribute(GX_VA_PNMTXIDX, false, GetNumMtxIdxComponents);
-    for(int i=GX_VA_TEX0MTXIDX; i <= GX_VA_TEX7MTXIDX; i++) {
-        totalBytes += HandleAttribute(static_cast<GXAttr>(i), false, GetNumMtxIdxComponents);
+    if(GX_VA_PNMTXIDX < maxAttr) {
+        totalBytes += HandleAttribute(GX_VA_PNMTXIDX, false, GetNumMtxIdxComponents);
     }
-    totalBytes += HandleAttribute(GX_VA_POS, false, GetNumPositionComponents);
-    totalBytes += HandleAttribute(GX_VA_NRM, false, GetNumNormalComponents);
-    totalBytes += HandleAttribute(GX_VA_CLR0, true, GetNumColorComponents);
-    totalBytes += HandleAttribute(GX_VA_CLR1, true, GetNumColorComponents);
+
+    for(int i=GX_VA_TEX0MTXIDX; i <= GX_VA_TEX7MTXIDX; i++) {
+        if(i < maxAttr) {
+            totalBytes += HandleAttribute(static_cast<GXAttr>(i), false, GetNumMtxIdxComponents);
+        }
+    }
+
+    if(GX_VA_POS < maxAttr){
+        totalBytes += HandleAttribute(GX_VA_POS, false, GetNumPositionComponents);
+    }
+
+    if(GX_VA_NRM < maxAttr) {
+        totalBytes += HandleAttribute(GX_VA_NRM, false, GetNumNormalComponents);
+    }
+    
+    if(GX_VA_CLR0 < maxAttr) {
+        totalBytes += HandleAttribute(GX_VA_CLR0, true, GetNumColorComponents);
+    }
+
+    if(GX_VA_CLR1 < maxAttr) {
+        totalBytes += HandleAttribute(GX_VA_CLR1, true, GetNumColorComponents);
+    }
 
     for(int attrib = GX_VA_TEX0; attrib <= GX_VA_TEX7; attrib++) {
-        totalBytes += HandleAttribute(static_cast<GXAttr>(attrib), false, GetNumTexCoordComponents);
+        if(attrib < maxAttr) {
+            totalBytes += HandleAttribute(static_cast<GXAttr>(attrib), false, GetNumTexCoordComponents);
+        }
     }
 
-    totalBytes += HandleAttribute(GX_VA_NBT, false, GetNumNBTComponents);
+    if(GX_VA_NBT < maxAttr) {
+        totalBytes += HandleAttribute(GX_VA_NBT, false, GetNumNBTComponents);
+    }
 
     return totalBytes;
 }

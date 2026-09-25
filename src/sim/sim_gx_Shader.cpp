@@ -104,6 +104,11 @@ static bool CompileShader(GLuint& id, const char * source) {
     glGetShaderiv(id, GL_COMPILE_STATUS, &status);
     if( status != GL_TRUE )
     {
+        printf("Shader compilation error!\n");
+        printf("=====BEGIN SHADER SRC=====\n");
+        // todo: maybe print with line no's?
+        printf("%s\n", source);
+        printf("=====END SHADER SRC=====\n");
         GLint logSize;
         glGetShaderiv(id, GL_INFO_LOG_LENGTH, &logSize);
         GLchar * errorBuf = new GLchar[logSize];
@@ -249,13 +254,21 @@ void Shader::Activate() {
     glUseProgram(mProgram);
 }
 
+std::optional<int> Shader::GetGlVertexAttrIdx(GXAttr gxAttribute) {
+    if(mAttrLocations[gxAttribute] >= 0) {
+        return mAttrLocations[gxAttribute];
+    }
+
+    return std::nullopt;
+}
+
 void Shader::GenerateVertexSource() {
     mVertexSource = "#version 330 core \n";
 
     //Create vertex layout
     int currentLoc = 0;
     if(mDescriptors[GX_VA_PNMTXIDX] != GX_NONE) {
-        mVertexSource += std::format("//layout (location = {}) in uint {};\n", currentLoc, VertexAttributeStrings[GX_VA_PNMTXIDX]);
+        mVertexSource += std::format("layout (location = {}) in uint {};\n", currentLoc, VertexAttributeStrings[GX_VA_PNMTXIDX]);
         currentLoc++;
     }
     
@@ -268,17 +281,17 @@ void Shader::GenerateVertexSource() {
     }
 
     if(numTexMtxEnabled > 0) {
-        mVertexSource += std::format("//layout(location = {}) in uvec4 texMtx0;\n", currentLoc);
+        mVertexSource += std::format("layout(location = {}) in uvec4 texMtx0;\n", currentLoc);
         currentLoc++;
         if(numTexMtxEnabled > 4) {
-            mVertexSource += std::format("//layout(location = {}) in uvec4 texMtx1;\n", currentLoc);
+            mVertexSource += std::format("layout(location = {}) in uvec4 texMtx1;\n", currentLoc);
             currentLoc++;
         }
     }
 
     for(int attr=GX_VA_POS; attr < GX_VA_MAX_ATTR; attr++) {
         if(mDescriptors[attr] != GX_NONE) {
-            mVertexSource += std::format("//layout (location = {}) in {} {};\n",
+            mVertexSource += std::format("layout (location = {}) in {} {};\n",
                 currentLoc, 
                 GetTypeName(mDescriptors[attr], mFormat.mAttributes[attr].mDataType, 
                             mFormat.mAttributes[attr].mComponents, static_cast<GXAttr>(attr)), 
@@ -290,20 +303,99 @@ void Shader::GenerateVertexSource() {
         }
     }
 
+    // add the const inputs for now (remove later)
+    //mVertexSource += "layout (location = 0) in vec3 position;\n"
+    //                 "layout (location = 1) in vec3 normal;\n"
+    //                 "layout (location = 2) in vec4 vertex_color;\n"
+    //                 "layout (location = 3) in vec2 texCoords;\n"
+    //                 "layout (location = 4) in uint posNormalMtxIdx;\n"
+    //                 "layout (location = 5) in uvec4 texMtxIdx0;\n"
+    //                 "layout (location = 6) in uvec4 texMtxIdx1;\n";
+
     // No vertex attributes enabled. we need to make something that compiles and links
     // but not display anything
     if(currentLoc == 0) {
-
+        mVertexSource += "layout (location = 0) in vec3 position;\n";
     }
-
-    // Add outputs
-    mVertexSource += "//smooth out vec3 rasc;\n"
-                     "//smooth out float rasa;\n"
-                     "//smooth out vec2 gxTexCoords[8 /* GX_MAX_TEXCOORD */];\n";
-
+    
+    // Add global generated variables
+    mVertexSource += "vec3 genPosition;\n"
+                     "vec3 genNormal;\n"
+                     "vec4 genColor0;\n"
+                     "vec2 genTexCoords;\n"
+                     "uint genPosNormalMtxIdx;\n"
+                     "uvec4 genTexMtxIdx0;\n"
+                     "uvec4 genTexMtxIdx1;\n";
+    
     printf("Compiling shader: \n%s\n\n=====\n", mVertexSource.c_str());
 
+    // Add the const src
     mVertexSource += std::string(SIM_GXVertexShader);
+
+    // Generate main() after ConstMain
+    mVertexSource += "void main() {\n";
+
+    // genPosition
+    if(mDescriptors[GX_VA_POS] == GX_INDEX8 || mDescriptors[GX_VA_POS] == GX_INDEX16) {
+        // TODO index lookup
+        mVertexSource += "  genPosition = vec3(0.0);\n";
+    } else if(mDescriptors[GX_VA_POS] != GX_NONE) {
+        mVertexSource += "  genPosition = position;\n";
+    } else {
+        mVertexSource += "  genPosition = vec3(0.0);\n";
+    }
+
+    // genNormal
+    if(mDescriptors[GX_VA_NRM] == GX_INDEX8 || mDescriptors[GX_VA_NRM] == GX_INDEX16) {
+        // TODO index lookup
+        mVertexSource += "  genNormal = vec3(0.0);\n";
+    } else if(mDescriptors[GX_VA_NRM] != GX_NONE) {
+        mVertexSource += "  genNormal = normal;\n";
+    } else {
+        mVertexSource += "  genNormal = vec3(0.0);\n";
+    }
+
+    // genColor0
+    if(mDescriptors[GX_VA_CLR0] == GX_INDEX8 || mDescriptors[GX_VA_CLR0] == GX_INDEX16) {
+        // TODO index lookup
+        mVertexSource += "  genColor0 = vec4(0.0);\n";
+    } else if(mDescriptors[GX_VA_CLR0] != GX_NONE) {
+        mVertexSource += "  genColor0 = color0;\n";
+    } else {
+        mVertexSource += "  genColor0 = vec4(0.0);\n";
+    }
+    
+    // genTexCoords
+    // genColor0
+    if(mDescriptors[GX_VA_TEX0] == GX_INDEX8 || mDescriptors[GX_VA_TEX0] == GX_INDEX16) {
+        // TODO index lookup
+        mVertexSource += "  genTexCoords = vec2(0.0);\n";
+    } else if(mDescriptors[GX_VA_TEX0] != GX_NONE) {
+        mVertexSource += "  genTexCoords = texCoord0;\n";
+    } else {
+        mVertexSource += "  genTexCoords = vec2(0.0);\n";
+    }
+
+    // genPosNormalMtxIdx
+    if(mDescriptors[GX_VA_PNMTXIDX] != GX_NONE) {
+        mVertexSource += "  genPosNormalMtxIdx = posNormalMtxIdx;\n";
+    } else {
+        mVertexSource += "  genPosNormalMtxIdx = mtxIdxA;\n";
+    }
+
+    // genTexMtxIdx
+    if(numTexMtxEnabled > 0) {
+        mVertexSource += "  genTexMtxIdx0 = texMtx0;\n";
+        if(numTexMtxEnabled > 4) {
+            mVertexSource += "  genTexMtxIdx1 = texMtx1;\n";
+        }
+    } else {
+        mVertexSource += "genTexMtxIdx0 = uvec4(0u);\n"
+                         "genTexMtxIdx1 = uvec4(0u);\n";
+    }
+                     
+    mVertexSource += "  ConstMain();\n";
+    mVertexSource += "}\n";
 }
 
 // Fragment shader will be constant for now

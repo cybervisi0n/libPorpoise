@@ -3,6 +3,7 @@
 
 #include <array>
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
 
@@ -28,6 +29,8 @@ class Shader {
 
   void Activate();
   // it will be up to GlRenderer to set the vertex attrib pointers (but this may be reconsidered later)
+
+  std::optional<int> GetGlVertexAttrIdx(GXAttr gxAttribute);
 
   // Uniform setters
   void SetProjectionMatrix(const float * matrixData);

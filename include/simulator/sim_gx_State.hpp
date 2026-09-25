@@ -90,7 +90,7 @@ class GlobalState {
   static GlobalState& GetInstance();
 
   size_t GetDescriptorSize(GXAttrType descriptorType, GXCompType dataType, bool isColorType = false);
-  size_t GetNumBytesPerVertex();
+  size_t GetNumBytesPerVertex(const GXAttr maxAttr = GX_VA_MAX_ATTR);
   static inline size_t GetNumMtxIdxComponents(GXCompCnt compType) {
     return 1;
   };

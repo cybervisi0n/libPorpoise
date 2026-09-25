@@ -65,6 +65,7 @@ static inline size_t ComponentSize(GXCompType type) {
     }
 }
 
+/*
 void NoOpComponent(const u8 * source, GXCompCnt dummy, GXCompType type, u8 fraction, float * output) {
 
 }
@@ -187,6 +188,7 @@ static inline bool ReadArrayIndex(const u8*& cursor, const u8* end, GXAttrType d
             return false;
     }
 }
+    */
 
 }
 
@@ -209,6 +211,10 @@ void GeometryProcessor::ProcessByteStream(std::vector<u8>& byteStream, std::endi
     }
 
     const size_t numVertices = byteStream.size() / bytesPerVertex;
+    GetGlRenderer().Draw(byteStream.data(), numVertices, gxState.GetCurrentPrimitive());
+
+
+    /*
     const auto& format = gxState.GetCurrentVertexFormat();
     const u8* cursor = byteStream.data();
     const u8* end = cursor + byteStream.size();
@@ -317,5 +323,6 @@ void GeometryProcessor::ProcessByteStream(std::vector<u8>& byteStream, std::endi
     }
 
     GetGlRenderer().Draw(mRenderVerts, numVertices, gxState.GetCurrentPrimitive());
+    */
 }
 }

@@ -14,7 +14,7 @@ struct RenderVertex;
 
 class GlRenderer {
  public:
-  void Draw(const RenderVertex * vertices, size_t numVertices, GXPrimitive primitive);
+  void Draw(const u8 * vertices, size_t numVertices, GXPrimitive primitive);
   void FlushRenderVerts();
 
   inline int GetBatchableDrawcalls() {return mBatchableDrawcalls; };
@@ -27,10 +27,11 @@ class GlRenderer {
   void Initialize();
   void ReserveRenderVerts(int numAdditionalVerts);
   void ReserveRenderIndices(int numAdditionalIndices);
-  void ExpandQuads(const SIM::GX::RenderVertex * vertices, size_t numVertices);
-  void ExpandQuadStrip(const SIM::GX::RenderVertex * vertices, size_t numVertices);
-  void ExpandTriangleStrip(const SIM::GX::RenderVertex * vertices, size_t numVertices);
+  void ExpandQuads(const u8 * vertices, size_t numVertices);
+  void ExpandQuadStrip(const u8 * vertices, size_t numVertices);
+  void ExpandTriangleStrip(const u8 * vertices, size_t numVertices);
   bool IsIndexed(GXPrimitive prim);
+  void ProcessIndexableAttribute(GXAttr attr);
 
   unsigned int mVertexArray = 0;
   unsigned int mVertexBuffer = 0;
@@ -39,7 +40,7 @@ class GlRenderer {
   unsigned int mLightsUniformBuffer = 0;
   unsigned int mMatrixMemoryUniformBuffer = 0;
 
-  RenderVertex * mRenderVerts = nullptr;
+  u8 * mRenderVerts = nullptr;
   
   int mRenderVertsPrimitive;
   size_t mRenderVertsCount = 0;
