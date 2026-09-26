@@ -302,9 +302,9 @@ void GlRenderer::Draw(const u8 * vertices, size_t numVertices, GXPrimitive primi
         glBindBuffer(GL_ARRAY_BUFFER, mVertexBuffer);
 
         // Disable all the attributes first
-        for(int i=0; i < GL_MAX_VERTEX_ATTRIBS; i++) {
-            glDisableVertexAttribArray(i);
-        }
+        //for(int i=0; i < GL_MAX_VERTEX_ATTRIBS; i++) {
+        //    glDisableVertexAttribArray(i);
+        //}
 
         // Set up the GL vertex attributes
         auto pnMtxAttrIdx = mCurrentShader->GetGlVertexAttrIdx(GX_VA_PNMTXIDX);

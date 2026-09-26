@@ -115,34 +115,34 @@ size_t GlobalState::GetNumBytesPerVertex() {
             return components * GetDescriptorSize(descriptor, format.mAttributes[attr].mDataType, colorType);
     };
 
-    totalBytes += HandleAttribute(GX_VA_PNMTXIDX, false, GetNumMtxIdxComponents);
     mVertexAttributeOffsets[GX_VA_PNMTXIDX] = totalBytes;
+    totalBytes += HandleAttribute(GX_VA_PNMTXIDX, false, GetNumMtxIdxComponents);
 
 
     for(int i=GX_VA_TEX0MTXIDX; i <= GX_VA_TEX7MTXIDX; i++) {
-        totalBytes += HandleAttribute(static_cast<GXAttr>(i), false, GetNumMtxIdxComponents);
         mVertexAttributeOffsets[i] = totalBytes;
+        totalBytes += HandleAttribute(static_cast<GXAttr>(i), false, GetNumMtxIdxComponents);
     }
 
-    totalBytes += HandleAttribute(GX_VA_POS, false, GetNumPositionComponents);
     mVertexAttributeOffsets[GX_VA_POS] = totalBytes;
-
-    totalBytes += HandleAttribute(GX_VA_NRM, false, GetNumNormalComponents);
-    mVertexAttributeOffsets[GX_VA_NRM] = totalBytes;
+    totalBytes += HandleAttribute(GX_VA_POS, false, GetNumPositionComponents);
     
-    totalBytes += HandleAttribute(GX_VA_CLR0, true, GetNumColorComponents);
+    mVertexAttributeOffsets[GX_VA_NRM] = totalBytes;
+    totalBytes += HandleAttribute(GX_VA_NRM, false, GetNumNormalComponents);
+    
     mVertexAttributeOffsets[GX_VA_CLR0] = totalBytes;
+    totalBytes += HandleAttribute(GX_VA_CLR0, true, GetNumColorComponents);
 
-    totalBytes += HandleAttribute(GX_VA_CLR1, true, GetNumColorComponents);
     mVertexAttributeOffsets[GX_VA_CLR1] = totalBytes;
+    totalBytes += HandleAttribute(GX_VA_CLR1, true, GetNumColorComponents);
 
     for(int attrib = GX_VA_TEX0; attrib <= GX_VA_TEX7; attrib++) {
-        totalBytes += HandleAttribute(static_cast<GXAttr>(attrib), false, GetNumTexCoordComponents);
         mVertexAttributeOffsets[attrib] = totalBytes;
+        totalBytes += HandleAttribute(static_cast<GXAttr>(attrib), false, GetNumTexCoordComponents);
     }
 
-    totalBytes += HandleAttribute(GX_VA_NBT, false, GetNumNBTComponents);
     mVertexAttributeOffsets[GX_VA_NBT] = totalBytes;
+    totalBytes += HandleAttribute(GX_VA_NBT, false, GetNumNBTComponents);
 
     return totalBytes;
 }
