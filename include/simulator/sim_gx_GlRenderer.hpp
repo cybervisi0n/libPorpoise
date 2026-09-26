@@ -70,6 +70,7 @@ class GlRenderer {
   int mNumChansLocation;
   int mMtxIdxALocation;
   int mPnMtxIdxEnabledLocation;
+  size_t mNumBytesPerVertex = 0;
   size_t mVboCapacity = 0;
   size_t mEboCapacity = 0;
 

@@ -90,7 +90,8 @@ class GlobalState {
   static GlobalState& GetInstance();
 
   size_t GetDescriptorSize(GXAttrType descriptorType, GXCompType dataType, bool isColorType = false);
-  size_t GetNumBytesPerVertex(const GXAttr maxAttr = GX_VA_MAX_ATTR);
+  size_t GetNumBytesPerVertex();
+  inline size_t GetVertexAttrOffset(GXAttr attr) { return mVertexAttributeOffsets[attr];};
   static inline size_t GetNumMtxIdxComponents(GXCompCnt compType) {
     return 1;
   };
@@ -288,6 +289,7 @@ class GlobalState {
   std::array<u8, GX_MAX_TEXMAP> mTlutAssignments = {};
   std::array<Light, 8> mLights = {};
   std::array<ColorChannel, 4> mColorChannels = {};
+  std::array<size_t, GX_VA_MAX_ATTR> mVertexAttributeOffsets = {};
   bool mTextureDirty = true;
   bool mTevDirty = true;
   GXCompare mDepthFunc;
