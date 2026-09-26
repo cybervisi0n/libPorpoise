@@ -26,6 +26,8 @@ struct VertexArray {
     GXAttr attribute;
     void * mArrayPtr = nullptr;
     int mStride = 0;
+    int mMaxIndex = 0;
+    bool mMaxIndexDirty = false;
 };
 
 struct Tlut {

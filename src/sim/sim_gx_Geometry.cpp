@@ -211,6 +211,52 @@ void GeometryProcessor::ProcessByteStream(std::vector<u8>& byteStream, std::endi
     }
 
     const size_t numVertices = byteStream.size() / bytesPerVertex;
+
+    // We will need to determine the maximum value of each indexed attribute (GL renderer needs this)
+    auto& descriptors = gxState.GetVertexDescriptorArray();
+    u8 * dataPtr = byteStream.data();
+    for(int attr = GX_VA_PNMTXIDX; attr < GX_VA_MAX_ATTR; attr++) {
+        if(descriptors[attr] == GX_INDEX8) {
+            VertexArray vtxArray = gxState.GetVertexArray(static_cast<GXAttr>(attr));
+            size_t offset = gxState.GetVertexAttrOffset(static_cast<GXAttr>(attr));
+            int maximum = vtxArray.mMaxIndex;
+            
+            for(size_t j=0; j < numVertices; j++) {
+                u8 * valPtr = dataPtr + offset;
+                u8 value = *valPtr;
+                if(value > maximum) {
+                    vtxArray.mMaxIndexDirty = true;
+                    vtxArray.mMaxIndex = value;
+                }
+                offset += bytesPerVertex;
+            }
+
+            if(vtxArray.mMaxIndexDirty) {
+                gxState.SetVertexArray(static_cast<GXAttr>(attr), vtxArray);
+            }
+        } else if (descriptors[attr] == GX_INDEX16) {
+            VertexArray vtxArray = gxState.GetVertexArray(static_cast<GXAttr>(attr));
+            size_t offset = gxState.GetVertexAttrOffset(static_cast<GXAttr>(attr));
+            int maximum = vtxArray.mMaxIndex;
+
+            for(size_t j=0; j < numVertices; j++) {
+                u8 * valPtr = dataPtr + offset;
+                u16 * valPtr16 = (u16*)valPtr;
+                u16 value = *valPtr16;
+                if(value > maximum) {
+                    vtxArray.mMaxIndexDirty = true;
+                    vtxArray.mMaxIndex = value;
+                }
+                offset += bytesPerVertex;
+            }
+
+            if(vtxArray.mMaxIndexDirty) {
+                gxState.SetVertexArray(static_cast<GXAttr>(attr), vtxArray);
+            }
+        }
+    }
+
+
     GetGlRenderer().Draw(byteStream.data(), numVertices, gxState.GetCurrentPrimitive());
 
 
