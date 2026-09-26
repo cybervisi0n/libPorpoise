@@ -99,76 +99,13 @@ void GlRenderer::Initialize() {
     mRenderIndicesCount = 0;
     mRenderIndicesCapacity = InitialRenderVertsCapacity;
 
+    glGenBuffers(GX_VA_MAX_ATTR, mTexBuffers.data());
+
     glGenVertexArrays(1, &mVertexArray);
     glGenBuffers(1, &mVertexBuffer);
     glBindVertexArray(mVertexArray);
     glBindBuffer(GL_ARRAY_BUFFER, mVertexBuffer);
 
-    /*
-    //location = 0 in vec3 position
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(
-        0,
-        3,
-        GL_FLOAT,
-        GL_FALSE,
-        sizeof(RenderVertex),
-        reinterpret_cast<void*>(offsetof(RenderVertex, position)));
-    //location = 1 in vec3 normal
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(
-        1,
-        3,
-        GL_FLOAT,
-        GL_FALSE,
-        sizeof(RenderVertex),
-        reinterpret_cast<void*>(offsetof(RenderVertex, normal)));
-    //location = 2 in vec4 vertex_color
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(
-        2,
-        4,
-        GL_FLOAT,
-        GL_FALSE,
-        sizeof(RenderVertex),
-        reinterpret_cast<void*>(offsetof(RenderVertex, color0)));
-    //location = 3 in vec2 texCoords
-    glEnableVertexAttribArray(3);
-    glVertexAttribPointer(
-        3,
-        2,
-        GL_FLOAT,
-        GL_FALSE,
-        sizeof(RenderVertex),
-        reinterpret_cast<void*>(offsetof(RenderVertex, texCoords)));
-    //location = 4 in uint posNormalMtxIdx
-    glEnableVertexAttribArray(4);
-    glVertexAttribPointer(
-        4,
-        1,
-        GL_UNSIGNED_INT,
-        GL_FALSE,
-        sizeof(RenderVertex),
-        reinterpret_cast<void*>(offsetof(RenderVertex, posNormalMtxIdx)));
-    //location = 5 in uvec4 texMtxIdx0
-    glEnableVertexAttribArray(5);
-    glVertexAttribPointer(
-        5,
-        4,
-        GL_UNSIGNED_INT,
-        GL_FALSE,
-        sizeof(RenderVertex),
-        reinterpret_cast<void*>(offsetof(RenderVertex, texMtxIdx)));
-    //location = 6 in uvec4 texMtxIdx1
-    glEnableVertexAttribArray(6);
-    glVertexAttribPointer(
-        6,
-        4,
-        GL_UNSIGNED_INT,
-        GL_FALSE,
-        sizeof(RenderVertex),
-        reinterpret_cast<void*>(offsetof(RenderVertex, texMtxIdx) + (4 * sizeof(u32))));
-    */
     // Element buffer
     glGenBuffers(1, &mElementBuffer);
     
@@ -258,6 +195,7 @@ void GlRenderer::Draw(const u8 * vertices, size_t numVertices, GXPrimitive primi
 
     if(
         gxState.GetIsVertexAttributesDirty() ||
+        gxState.GetIsVertexArraysDirty() ||
         gxState.GetIsTextureDirty() ||
         gxState.GetIsDepthDirty() ||
         gxState.GetIsProjectionMatrixDirty() ||
@@ -364,6 +302,29 @@ void GlRenderer::Draw(const u8 * vertices, size_t numVertices, GXPrimitive primi
         // When an application changes the vertex attributes this can be a very expensive operation
 
         gxState.SetVertexAttributesDirty(false);
+    }
+
+    auto& descriptors = gxState.GetVertexDescriptorArray();
+    if(gxState.GetIsVertexArraysDirty()) {
+        // Copy indexable arrays from the gx state
+        // Array data is not sent until draw call is flushed to allow the max index to grow between batched drawcalls
+        for(int attrib = GX_VA_POS; attrib <= GX_VA_TEX7; attrib++) {
+            if(descriptors[attrib] == GX_INDEX8 || descriptors[attrib] == GX_INDEX16) {
+                mCurrentDrawArrays[attrib] = gxState.GetVertexArray(static_cast<GXAttr>(attrib));
+            }
+        }
+    }
+
+    // check arrays
+    for(int attrib = GX_VA_POS; attrib <= GX_VA_TEX7; attrib++) {
+        if(descriptors[attrib] == GX_INDEX8 || descriptors[attrib] == GX_INDEX16) {
+            auto& array = gxState.GetVertexArray(static_cast<GXAttr>(attrib));
+            mCurrentDrawArrays[attrib].mMaxIndex = array.mMaxIndex;
+        }
+    }
+
+    if(gxState.GetIsVertexArraysDirty()) {
+        gxState.SetVertexArraysDirty(false);
     }
 
     if(gxState.GetIsTextureDirty()) {
@@ -624,6 +585,16 @@ void GlRenderer::FlushRenderVerts() {
     #ifdef TRACY_ENABLE
     ZoneScoped;
     #endif
+
+    // Upload indexable attributes
+    auto& descriptors = GetGlobalState().GetVertexDescriptorArray();
+    for(int attrib = GX_VA_POS; attrib <= GX_VA_TEX7; attrib++) {
+        if((descriptors[attrib] == GX_INDEX8) || (descriptors[attrib] == GX_INDEX16)) {
+            // Upload tex buffer now
+
+        }
+    }
+
     glBindVertexArray(mVertexArray);
     glBindBuffer(GL_ARRAY_BUFFER, mVertexBuffer);
     if(mVboCapacity < mRenderVertsCount) {

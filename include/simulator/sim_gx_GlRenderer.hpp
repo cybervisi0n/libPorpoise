@@ -1,6 +1,7 @@
 #ifndef LIBPORPOISE_SIM_GX_GLRENDERER_HPP
 #define LIBPORPOISE_SIM_GX_GLRENDERER_HPP
 
+#include <array>
 #include <vector>
 
 #include <dolphin/types.h>
@@ -73,6 +74,8 @@ class GlRenderer {
   size_t mNumBytesPerVertex = 0;
   size_t mVboCapacity = 0;
   size_t mEboCapacity = 0;
+  std::array<VertexArray, GX_VA_MAX_ATTR> mCurrentDrawArrays = {};
+  std::array<uint, GX_VA_MAX_ATTR> mTexBuffers = {};
 
 
   int mBatchableDrawcalls = 0;

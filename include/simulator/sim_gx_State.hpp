@@ -159,6 +159,8 @@ class GlobalState {
   inline u8 GetTlutAssignment(GXTexMapID texMap) { return mTlutAssignments[texMap]; };
   inline bool GetIsTextureDirty() { return mTextureDirty;};
   inline bool GetIsDepthDirty() { return mDepthDirty; };
+  inline bool GetIsVertexArraysDirty() { return mVertexArraysDirty; };
+  inline void SetVertexArraysDirty(bool dirty) { mVertexArraysDirty = dirty; };
   inline bool GetIsProjectionMatrixDirty() { return mProjectionMatrixDirty; };
   inline void SetProjectionMatrixDirty(bool dirty) { mProjectionMatrixDirty = dirty; };
   inline bool GetIsTexGenDirty() {return mTexGenDirty;};
@@ -206,7 +208,15 @@ class GlobalState {
     }
   };
   inline void SetCurrentVertexFormat(GXVtxFmt format) {mCurrentVertexFormat = format;};
-  inline void SetVertexArray(GXAttr attr, VertexArray array) {mVertexArrays[attr] = array;};
+  inline void SetVertexArray(GXAttr attr, VertexArray array) {
+    if((array.mArrayPtr != mVertexArrays[attr].mArrayPtr)
+    || (array.mStride != mVertexArrays[attr].mStride)) {
+      mVertexArrays[attr] = array;
+      mVertexArraysDirty = true;
+      mVertexArrays[attr].mMaxIndex = 0;
+      mVertexArrays[attr].mMaxIndexDirty = false;
+    }
+  };
   inline void SetVertexDescriptor(GXAttr attr, GXAttrType descType) {
     if(mVertexDescriptors[attr] != descType) {
       mVertexDescriptors[attr] = descType;
@@ -309,6 +319,7 @@ class GlobalState {
   bool mInitialTevColorsDirty = true;
   bool mMatrixIndexDirty = true;
   bool mVertexAttributesDirty = true;
+  bool mVertexArraysDirty = true;
 };
 
 void InitGlobalState();
