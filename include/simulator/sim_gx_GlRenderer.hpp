@@ -76,6 +76,7 @@ class GlRenderer {
   size_t mEboCapacity = 0;
   std::array<VertexArray, GX_VA_MAX_ATTR> mCurrentDrawArrays = {};
   std::array<uint, GX_VA_MAX_ATTR> mTexBuffers = {};
+  std::array<uint, GX_VA_MAX_ATTR> mTexBufferTextures = {};
 
 
   int mBatchableDrawcalls = 0;

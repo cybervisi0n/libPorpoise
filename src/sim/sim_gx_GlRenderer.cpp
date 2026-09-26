@@ -100,6 +100,7 @@ void GlRenderer::Initialize() {
     mRenderIndicesCapacity = InitialRenderVertsCapacity;
 
     glGenBuffers(GX_VA_MAX_ATTR, mTexBuffers.data());
+    glGenTextures(GX_VA_MAX_ATTR, mTexBufferTextures.data());
 
     glGenVertexArrays(1, &mVertexArray);
     glGenBuffers(1, &mVertexBuffer);
@@ -591,7 +592,13 @@ void GlRenderer::FlushRenderVerts() {
     for(int attrib = GX_VA_POS; attrib <= GX_VA_TEX7; attrib++) {
         if((descriptors[attrib] == GX_INDEX8) || (descriptors[attrib] == GX_INDEX16)) {
             // Upload tex buffer now
-
+            glBindBuffer(GL_TEXTURE_BUFFER, mTexBuffers[attrib]);
+            glBufferData(GL_TEXTURE_BUFFER,
+            static_cast<GLsizeiptr>(mCurrentDrawArrays[attrib].mMaxIndex * mCurrentDrawArrays[attrib].mStride),
+            mCurrentDrawArrays[attrib].mArrayPtr,
+            GL_DYNAMIC_DRAW);
+            glBindTexture(GL_TEXTURE_BUFFER, mTexBufferTextures[attrib]);
+            glTexBuffer(GL_TEXTURE_BUFFER, GL_R8, mTexBuffers[attrib]);
         }
     }
 
