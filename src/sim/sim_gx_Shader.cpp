@@ -535,7 +535,6 @@ void Shader::GenerateIndexableAttributeCode(GXAttr attr) {
     } else if(mDescriptors[attr] != GX_NONE) {
         mVertexSource += std::string(GenVertexAttributeStrings[attr]) + " = " + std::string(VertexAttributeStrings[attr]) + ";\n";
     } else {
-        mVertexSource += "  genPosition = vec3(0.0);\n";
         mVertexSource += std::string(GenVertexAttributeStrings[attr]) + " = " + std::string(GenVertexAttributeTypeStrings[attr]) + "(0.0);\n";
     }
 }
