@@ -269,7 +269,10 @@ void Shader::GenerateVertexSource() {
     int currentLoc = 0;
     if(mDescriptors[GX_VA_PNMTXIDX] != GX_NONE) {
         mVertexSource += std::format("layout (location = {}) in uint {};\n", currentLoc, VertexAttributeStrings[GX_VA_PNMTXIDX]);
+        mAttrLocations[GX_VA_PNMTXIDX] = currentLoc;
         currentLoc++;
+    } else {
+        mAttrLocations[GX_VA_PNMTXIDX] = -1;
     }
     
     // Handle texmtxidx... attrs
@@ -278,6 +281,7 @@ void Shader::GenerateVertexSource() {
         if(mDescriptors[attr] != GX_NONE) {
             numTexMtxEnabled++;
         }
+        mAttrLocations[attr] = -1;
     }
 
     if(numTexMtxEnabled > 0) {
