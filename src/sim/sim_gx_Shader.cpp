@@ -342,7 +342,8 @@ void Shader::GenerateVertexSource() {
     // genPosition
     if(mDescriptors[GX_VA_POS] == GX_INDEX8 || mDescriptors[GX_VA_POS] == GX_INDEX16) {
         // TODO index lookup
-        mVertexSource += "  genPosition = vec3(0.0);\n";
+        // This is just some dummy code to trick the shader compiler into thinking these vars are used
+        mVertexSource += "  if(position == 0u) { genPosition = vec3(1.0);} else {genPosition = vec3(0.5);};\n";
     } else if(mDescriptors[GX_VA_POS] != GX_NONE) {
         mVertexSource += "  genPosition = position;\n";
     } else {
@@ -352,7 +353,8 @@ void Shader::GenerateVertexSource() {
     // genNormal
     if(mDescriptors[GX_VA_NRM] == GX_INDEX8 || mDescriptors[GX_VA_NRM] == GX_INDEX16) {
         // TODO index lookup
-        mVertexSource += "  genNormal = vec3(0.0);\n";
+        // This is just some dummy code to trick the shader compiler into thinking these vars are used
+        mVertexSource += "  if(normal == 0u) { genNormal = vec3(1.0);} else {genNormal = vec3(0.5);};\n";
     } else if(mDescriptors[GX_VA_NRM] != GX_NONE) {
         mVertexSource += "  genNormal = normal;\n";
     } else {
@@ -362,7 +364,8 @@ void Shader::GenerateVertexSource() {
     // genColor0
     if(mDescriptors[GX_VA_CLR0] == GX_INDEX8 || mDescriptors[GX_VA_CLR0] == GX_INDEX16) {
         // TODO index lookup
-        mVertexSource += "  genColor0 = vec4(0.0);\n";
+        // This is just some dummy code to trick the shader compiler into thinking these vars are used
+        mVertexSource += "  if(color0 == 0u) { genColor0 = vec4(1.0);} else {genColor0 = vec4(0.5);};\n";
     } else if(mDescriptors[GX_VA_CLR0] != GX_NONE) {
         mVertexSource += "  genColor0 = color0;\n";
     } else {
