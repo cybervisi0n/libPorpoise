@@ -54,6 +54,7 @@ class Shader {
   void GenerateFragmentSource();
   void Compile();
   void SetupUniformLocations();
+  void GenerateIndexableAttributeCode(GXAttr attr);
 
   SIM::GX::VertexFormat mFormat;
   std::array<GXAttrType, GX_VA_MAX_ATTR> mDescriptors;

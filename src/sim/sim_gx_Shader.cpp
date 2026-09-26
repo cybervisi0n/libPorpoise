@@ -52,6 +52,76 @@ static constexpr std::array<const char *, GX_VA_MAX_ATTR> VertexAttributeStrings
     "nbt"
 };
 
+static constexpr std::array<const char *, GX_VA_MAX_ATTR> GenVertexAttributeStrings = {
+    "genPosNormalMtxIdx",
+
+    // Note: these are combined into two uvec4 vertex attributes to save on attributes (so these likely not used)
+    "genTex0MtxIdx",
+    "genTex1MtxIdx",
+    "genTex2MtxIdx",
+    "genTex3MtxIdx",
+    "genTex4MtxIdx",
+    "genTex5MtxIdx",
+    "genTex6MtxIdx",
+    "genTex7MtxIdx",
+
+    "genPosition",
+    "genNormal",
+    "genColor0",
+    "genColor1",
+
+    // note: these might get combined into only 4 attributes to save on attribute space
+    "genTexCoord0",
+    "genTexCoord1",
+    "genTexCoord2",
+    "genTexCoord3",
+    "genTexCoord4",
+    "genTexCoord5",
+    "genTexCoord6",
+    "genTexCoord7",
+
+    "genPosMtxArray",
+    "genNormalMtxArray",
+    "genTexMtxArray",
+    "genLightArray",
+    "genNbt"
+};
+
+static constexpr std::array<const char *, GX_VA_MAX_ATTR> GenVertexAttributeTypeStrings = {
+    "uint",
+
+    // Note: these are combined into two uvec4 vertex attributes to save on attributes (so these likely not used)
+    "uint",
+    "uint",
+    "uint",
+    "uint",
+    "uint",
+    "uint",
+    "uint",
+    "uint",
+
+    "vec3",
+    "vec3",
+    "vec4",
+    "vec4",
+
+    // note: these might get combined into only 4 attributes to save on attribute space
+    "vec2",
+    "vec2",
+    "vec2",
+    "vec2",
+    "vec2",
+    "vec2",
+    "vec2",
+    "vec2",
+
+    "uint",
+    "uint",
+    "uint",
+    "uint",
+    "vec3"
+};
+
 static std::string GetTypeName(GXAttrType descriptor, GXCompType type, GXCompCnt cnt, GXAttr attr) {
     if(descriptor == GX_INDEX8 || descriptor == GX_INDEX16
     || (attr >= GX_VA_TEX0MTXIDX && attr <= GX_VA_TEX7MTXIDX)) {
@@ -340,37 +410,43 @@ void Shader::GenerateVertexSource() {
     mVertexSource += "void main() {\n";
 
     // genPosition
-    if(mDescriptors[GX_VA_POS] == GX_INDEX8 || mDescriptors[GX_VA_POS] == GX_INDEX16) {
-        // TODO index lookup
-        // This is just some dummy code to trick the shader compiler into thinking these vars are used
-        mVertexSource += "  if(position == 0u) { genPosition = vec3(1.0);} else {genPosition = vec3(0.5);};\n";
-    } else if(mDescriptors[GX_VA_POS] != GX_NONE) {
-        mVertexSource += "  genPosition = position;\n";
-    } else {
-        mVertexSource += "  genPosition = vec3(0.0);\n";
-    }
+    //if(mDescriptors[GX_VA_POS] == GX_INDEX8 || mDescriptors[GX_VA_POS] == GX_INDEX16) {
+    //    // TODO index lookup
+    //    // This is just some dummy code to trick the shader compiler into thinking these vars are used
+    //    mVertexSource += "  if(position == 0u) { genPosition = vec3(1.0);} else {genPosition = vec3(0.5);};\n";
+    //} else if(mDescriptors[GX_VA_POS] != GX_NONE) {
+    //    mVertexSource += "  genPosition = position;\n";
+    //} else {
+    //    mVertexSource += "  genPosition = vec3(0.0);\n";
+    //}
+//
+    //// genNormal
+    //if(mDescriptors[GX_VA_NRM] == GX_INDEX8 || mDescriptors[GX_VA_NRM] == GX_INDEX16) {
+    //    // TODO index lookup
+    //    // This is just some dummy code to trick the shader compiler into thinking these vars are used
+    //    mVertexSource += "  if(normal == 0u) { genNormal = vec3(1.0);} else {genNormal = vec3(0.5);};\n";
+    //} else if(mDescriptors[GX_VA_NRM] != GX_NONE) {
+    //    mVertexSource += "  genNormal = normal;\n";
+    //} else {
+    //    mVertexSource += "  genNormal = vec3(0.0);\n";
+    //}
+//
+    //// genColor0
+    //if(mDescriptors[GX_VA_CLR0] == GX_INDEX8 || mDescriptors[GX_VA_CLR0] == GX_INDEX16) {
+    //    // TODO index lookup
+    //    // This is just some dummy code to trick the shader compiler into thinking these vars are used
+    //    mVertexSource += "  if(color0 == 0u) { genColor0 = vec4(1.0);} else {genColor0 = vec4(0.5);};\n";
+    //} else if(mDescriptors[GX_VA_CLR0] != GX_NONE) {
+    //    mVertexSource += "  genColor0 = color0;\n";
+    //} else {
+    //    mVertexSource += "  genColor0 = vec4(0.0);\n";
+    //}
 
-    // genNormal
-    if(mDescriptors[GX_VA_NRM] == GX_INDEX8 || mDescriptors[GX_VA_NRM] == GX_INDEX16) {
-        // TODO index lookup
-        // This is just some dummy code to trick the shader compiler into thinking these vars are used
-        mVertexSource += "  if(normal == 0u) { genNormal = vec3(1.0);} else {genNormal = vec3(0.5);};\n";
-    } else if(mDescriptors[GX_VA_NRM] != GX_NONE) {
-        mVertexSource += "  genNormal = normal;\n";
-    } else {
-        mVertexSource += "  genNormal = vec3(0.0);\n";
-    }
 
-    // genColor0
-    if(mDescriptors[GX_VA_CLR0] == GX_INDEX8 || mDescriptors[GX_VA_CLR0] == GX_INDEX16) {
-        // TODO index lookup
-        // This is just some dummy code to trick the shader compiler into thinking these vars are used
-        mVertexSource += "  if(color0 == 0u) { genColor0 = vec4(1.0);} else {genColor0 = vec4(0.5);};\n";
-    } else if(mDescriptors[GX_VA_CLR0] != GX_NONE) {
-        mVertexSource += "  genColor0 = color0;\n";
-    } else {
-        mVertexSource += "  genColor0 = vec4(0.0);\n";
-    }
+    GenerateIndexableAttributeCode(GX_VA_POS);
+    GenerateIndexableAttributeCode(GX_VA_NRM);
+    GenerateIndexableAttributeCode(GX_VA_CLR0);
+    GenerateIndexableAttributeCode(GX_VA_TEX0);
     
     // genTexCoords
     // genColor0
@@ -448,6 +524,20 @@ void Shader::SetupUniformLocations() {
     mNumChansLocation = glGetUniformLocation(static_cast<GLuint>(mProgram), "u_numChans");
     mMtxIdxALocation = glGetUniformLocation(static_cast<GLuint>(mProgram), "mtxIdxA");
     mPnMtxIdxEnabledLocation = glGetUniformLocation(static_cast<GLuint>(mProgram), "pnMtxIdxEnabled");
+}
+
+
+void Shader::GenerateIndexableAttributeCode(GXAttr attr) {
+    if(mDescriptors[attr] == GX_INDEX8 || mDescriptors[attr] == GX_INDEX16) {
+        // TODO index lookup
+        // This is just some dummy code to trick the shader compiler into thinking these vars are used
+        mVertexSource += "if(" + std::string(VertexAttributeStrings[attr]) + " == 0u){ " + std::string(GenVertexAttributeStrings[attr]) + " = " + std::string(GenVertexAttributeTypeStrings[attr]) + "(1.0);} else {" + std::string(GenVertexAttributeStrings[attr]) + " = " + std::string(GenVertexAttributeTypeStrings[attr]) + "(0.5);};\n";
+    } else if(mDescriptors[attr] != GX_NONE) {
+        mVertexSource += std::string(GenVertexAttributeStrings[attr]) + " = " + std::string(VertexAttributeStrings[attr]) + ";\n";
+    } else {
+        mVertexSource += "  genPosition = vec3(0.0);\n";
+        mVertexSource += std::string(GenVertexAttributeStrings[attr]) + " = " + std::string(GenVertexAttributeTypeStrings[attr]) + "(0.0);\n";
+    }
 }
 
 
