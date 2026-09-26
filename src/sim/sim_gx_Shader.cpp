@@ -71,7 +71,7 @@ static constexpr std::array<const char *, GX_VA_MAX_ATTR> GenVertexAttributeStri
     "genColor1",
 
     // note: these might get combined into only 4 attributes to save on attribute space
-    "genTexCoord0",
+    "genTexCoords",
     "genTexCoord1",
     "genTexCoord2",
     "genTexCoord3",
