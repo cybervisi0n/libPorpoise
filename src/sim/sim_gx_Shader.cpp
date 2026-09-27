@@ -356,6 +356,17 @@ void Shader::SetNumTevStages(u32 stages) {
 // Activates the shader in GL
 void Shader::Activate() {
     glUseProgram(mProgram);
+    if(!mTexBufUniformsInitialized) {
+        // Initialize any indexable texBuf uniforms
+        for(int attr = GX_VA_POS; attr <= GX_VA_TEX7; attr++) {
+            if((mDescriptors[attr] == GX_INDEX8) || (mDescriptors[attr] == GX_INDEX16)) {
+                int location = glGetUniformLocation(mProgram, TexBufferVarNames[attr]);
+                glUniform1i(location, attr-1);
+            }
+        }
+
+        mTexBufUniformsInitialized = true;
+    }
 }
 
 std::optional<int> Shader::GetGlVertexAttrIdx(GXAttr gxAttribute) {

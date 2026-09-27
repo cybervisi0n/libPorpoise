@@ -96,6 +96,8 @@ class Shader {
   int mNumChansLocation;
   int mMtxIdxALocation;
   int mPnMtxIdxEnabledLocation;
+
+  bool mTexBufUniformsInitialized = false;
 };
 
 
