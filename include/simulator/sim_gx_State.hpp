@@ -215,6 +215,9 @@ class GlobalState {
       mVertexArraysDirty = true;
       mVertexArrays[attr].mMaxIndex = 0;
       mVertexArrays[attr].mMaxIndexDirty = false;
+    } else if(array.mMaxIndexDirty) {
+      mVertexArrays[attr].mMaxIndex = array.mMaxIndex;
+      mVertexArrays[attr].mMaxIndexDirty = true;
     }
   };
   inline void SetVertexDescriptor(GXAttr attr, GXAttrType descType) {

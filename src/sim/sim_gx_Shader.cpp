@@ -550,6 +550,8 @@ void Shader::GenerateIndexableAttributeCode(GXAttr attr) {
         // Type conversion TODO
         if(attr == GX_VA_POS && !integerType) {
             mVertexSource += std::format("{} = fetch_{}.xyz;\n", GenVertexAttributeStrings[attr], VertexAttributeStrings[attr]);
+        } else if(attr == GX_VA_POS && integerType) {
+            mVertexSource += std::format("{}.xyz = vec3(fetch_{});\n", GenVertexAttributeStrings[attr], VertexAttributeStrings[attr]);
         }
         
     } else if(mDescriptors[attr] != GX_NONE) {
