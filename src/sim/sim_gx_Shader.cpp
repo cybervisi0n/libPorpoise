@@ -122,6 +122,39 @@ static constexpr std::array<const char *, GX_VA_MAX_ATTR> GenVertexAttributeType
     "vec3"
 };
 
+static constexpr std::array<const char *, GX_VA_MAX_ATTR> TexBufferVarNames = {
+    "unused",
+
+    "unused",
+    "unused",
+    "unused",
+    "unused",
+    "unused",
+    "unused",
+    "unused",
+    "unused",
+
+    "positionTexBuf",
+    "normalTexBuf",
+    "color0TexBuf",
+    "color1TexBuf",
+
+    "texCoordsTexBuf",
+    "texCoordsTexBuf",
+    "texCoordsTexBuf",
+    "texCoordsTexBuf",
+    "texCoordsTexBuf",
+    "texCoordsTexBuf",
+    "texCoordsTexBuf",
+    "texCoordsTexBuf",
+
+    "unused",
+    "unused",
+    "unused",
+    "unused",
+    "nbtTexBuf"
+};
+
 static std::string GetTypeName(GXAttrType descriptor, GXCompType type, GXCompCnt cnt, GXAttr attr) {
     if(descriptor == GX_INDEX8 || descriptor == GX_INDEX16
     || (attr >= GX_VA_TEX0MTXIDX && attr <= GX_VA_TEX7MTXIDX)) {
@@ -376,16 +409,6 @@ void Shader::GenerateVertexSource() {
             mAttrLocations[attr] = -1;
         }
     }
-
-    // add the const inputs for now (remove later)
-    //mVertexSource += "layout (location = 0) in vec3 position;\n"
-    //                 "layout (location = 1) in vec3 normal;\n"
-    //                 "layout (location = 2) in vec4 vertex_color;\n"
-    //                 "layout (location = 3) in vec2 texCoords;\n"
-    //                 "layout (location = 4) in uint posNormalMtxIdx;\n"
-    //                 "layout (location = 5) in uvec4 texMtxIdx0;\n"
-    //                 "layout (location = 6) in uvec4 texMtxIdx1;\n";
-
     // No vertex attributes enabled. we need to make something that compiles and links
     // but not display anything
     if(currentLoc == 0) {
@@ -400,6 +423,13 @@ void Shader::GenerateVertexSource() {
                      "uint genPosNormalMtxIdx;\n"
                      "uvec4 genTexMtxIdx0;\n"
                      "uvec4 genTexMtxIdx1;\n";
+
+    // Seems like we have to make these uniform and can't use const (the values can be set at first activation time)
+    for(int attr=GX_VA_POS; attr<=GX_VA_TEX0; attr++) {
+        if(mDescriptors[attr] == GX_INDEX8 || mDescriptors[attr] == GX_INDEX16) {
+            mVertexSource += std::format("uniform samplerBuffer {};\n", TexBufferVarNames[attr]);
+        }
+    }
     
     printf("Compiling shader: \n%s\n\n=====\n", mVertexSource.c_str());
 
@@ -409,55 +439,10 @@ void Shader::GenerateVertexSource() {
     // Generate main() after ConstMain
     mVertexSource += "void main() {\n";
 
-    // genPosition
-    //if(mDescriptors[GX_VA_POS] == GX_INDEX8 || mDescriptors[GX_VA_POS] == GX_INDEX16) {
-    //    // TODO index lookup
-    //    // This is just some dummy code to trick the shader compiler into thinking these vars are used
-    //    mVertexSource += "  if(position == 0u) { genPosition = vec3(1.0);} else {genPosition = vec3(0.5);};\n";
-    //} else if(mDescriptors[GX_VA_POS] != GX_NONE) {
-    //    mVertexSource += "  genPosition = position;\n";
-    //} else {
-    //    mVertexSource += "  genPosition = vec3(0.0);\n";
-    //}
-//
-    //// genNormal
-    //if(mDescriptors[GX_VA_NRM] == GX_INDEX8 || mDescriptors[GX_VA_NRM] == GX_INDEX16) {
-    //    // TODO index lookup
-    //    // This is just some dummy code to trick the shader compiler into thinking these vars are used
-    //    mVertexSource += "  if(normal == 0u) { genNormal = vec3(1.0);} else {genNormal = vec3(0.5);};\n";
-    //} else if(mDescriptors[GX_VA_NRM] != GX_NONE) {
-    //    mVertexSource += "  genNormal = normal;\n";
-    //} else {
-    //    mVertexSource += "  genNormal = vec3(0.0);\n";
-    //}
-//
-    //// genColor0
-    //if(mDescriptors[GX_VA_CLR0] == GX_INDEX8 || mDescriptors[GX_VA_CLR0] == GX_INDEX16) {
-    //    // TODO index lookup
-    //    // This is just some dummy code to trick the shader compiler into thinking these vars are used
-    //    mVertexSource += "  if(color0 == 0u) { genColor0 = vec4(1.0);} else {genColor0 = vec4(0.5);};\n";
-    //} else if(mDescriptors[GX_VA_CLR0] != GX_NONE) {
-    //    mVertexSource += "  genColor0 = color0;\n";
-    //} else {
-    //    mVertexSource += "  genColor0 = vec4(0.0);\n";
-    //}
-
-
     GenerateIndexableAttributeCode(GX_VA_POS);
     GenerateIndexableAttributeCode(GX_VA_NRM);
     GenerateIndexableAttributeCode(GX_VA_CLR0);
     GenerateIndexableAttributeCode(GX_VA_TEX0);
-    
-    // genTexCoords
-    // genColor0
-    if(mDescriptors[GX_VA_TEX0] == GX_INDEX8 || mDescriptors[GX_VA_TEX0] == GX_INDEX16) {
-        // TODO index lookup
-        mVertexSource += "  genTexCoords = vec2(0.0);\n";
-    } else if(mDescriptors[GX_VA_TEX0] != GX_NONE) {
-        mVertexSource += "  genTexCoords = texCoord0;\n";
-    } else {
-        mVertexSource += "  genTexCoords = vec2(0.0);\n";
-    }
 
     // genPosNormalMtxIdx
     if(mDescriptors[GX_VA_PNMTXIDX] != GX_NONE) {

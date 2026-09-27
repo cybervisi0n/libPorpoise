@@ -11,6 +11,12 @@
 
 #include "simulator/sim_gx_State.hpp"
 
+#define SIM_GX_POSITION_TEXTURE_NUM 8
+#define SIM_GX_NORMAL_TEXTURE_NUM 9
+#define SIM_GX_COLOR0_TEXTURE_NUM 10
+#define SIM_GX_COLOR1_TEXTURE_NUM 11
+#define SIM_GX_TEXCOORD_TEXTURE_NUM 12
+
 namespace SIM::GX {
 
 class Shader {

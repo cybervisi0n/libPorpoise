@@ -597,6 +597,8 @@ void GlRenderer::FlushRenderVerts() {
             static_cast<GLsizeiptr>(mCurrentDrawArrays[attrib].mMaxIndex * mCurrentDrawArrays[attrib].mStride),
             mCurrentDrawArrays[attrib].mArrayPtr,
             GL_DYNAMIC_DRAW);
+            // Position texture unit is 8, normal texture unit is 9, etc
+            glActiveTexture(GL_TEXTURE0 + static_cast<int>(attrib - 1));
             glBindTexture(GL_TEXTURE_BUFFER, mTexBufferTextures[attrib]);
             glTexBuffer(GL_TEXTURE_BUFFER, GL_R8, mTexBuffers[attrib]);
         }
