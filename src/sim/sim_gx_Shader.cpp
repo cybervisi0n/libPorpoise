@@ -1,5 +1,6 @@
 #include "simulator/sim_gx_Shader.hpp"
 
+#include "dolphin/gx/GXEnum.h"
 #include "simulator/glad/glad.h"
 #include "simulator/sim_crc32.h"
 
@@ -427,7 +428,14 @@ void Shader::GenerateVertexSource() {
     // Seems like we have to make these uniform and can't use const (the values can be set at first activation time)
     for(int attr=GX_VA_POS; attr<=GX_VA_TEX0; attr++) {
         if(mDescriptors[attr] == GX_INDEX8 || mDescriptors[attr] == GX_INDEX16) {
-            mVertexSource += std::format("uniform samplerBuffer {};\n", TexBufferVarNames[attr]);
+            if((attr != GX_VA_CLR0) && (attr != GX_VA_CLR1) && 
+                (mFormat.mAttributes[attr].mDataType != GX_F32)) {
+                // integer sampler buffer
+                mVertexSource += std::format("uniform isamplerBuffer {};\n", TexBufferVarNames[attr]);
+            } else {
+                mVertexSource += std::format("uniform samplerBuffer {};\n", TexBufferVarNames[attr]);
+            }
+            
         }
     }
     
@@ -517,11 +525,29 @@ void Shader::GenerateIndexableAttributeCode(GXAttr attr) {
         // TODO index lookup
         // This is just some dummy code to trick the shader compiler into thinking these vars are used
         mVertexSource += "if(" + std::string(VertexAttributeStrings[attr]) + " == 0u){ " + std::string(GenVertexAttributeStrings[attr]) + " = " + std::string(GenVertexAttributeTypeStrings[attr]) + "(1.0);} else {" + std::string(GenVertexAttributeStrings[attr]) + " = " + std::string(GenVertexAttributeTypeStrings[attr]) + "(0.5);};\n";
+
+
+        bool integerType = (attr != GX_VA_CLR0) && (attr != GX_VA_CLR1) && mFormat.mAttributes[attr].mDataType != GX_F32;
+        if(integerType) {
+            mVertexSource += "ivec4 ";
+        }else {
+            mVertexSource += "vec4 ";
+        }
+
+        mVertexSource += std::format("fetch_{} = texelFetch({}, int({}));\n", VertexAttributeStrings[attr], TexBufferVarNames[attr], VertexAttributeStrings[attr]);
+
+        // Type conversion TODO
+        if(attr == GX_VA_POS && !integerType) {
+            mVertexSource += std::format("{} = fetch_{}.xyz;\n", GenVertexAttributeStrings[attr], VertexAttributeStrings[attr]);
+        }
+        
     } else if(mDescriptors[attr] != GX_NONE) {
         mVertexSource += std::string(GenVertexAttributeStrings[attr]) + " = " + std::string(VertexAttributeStrings[attr]) + ";\n";
     } else {
         mVertexSource += std::string(GenVertexAttributeStrings[attr]) + " = " + std::string(GenVertexAttributeTypeStrings[attr]) + "(0.0);\n";
     }
+
+    
 }
 
 
