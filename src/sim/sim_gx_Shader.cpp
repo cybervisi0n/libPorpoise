@@ -52,51 +52,6 @@ static constexpr std::array<const char *, GX_VA_MAX_ATTR> VertexAttributeStrings
     "nbt"
 };
 
-static std::string GetTypeName(GXAttrType descriptor, GXCompType type, GXCompCnt cnt, GXAttr attr) {
-    if(descriptor == GX_INDEX8 || descriptor == GX_INDEX16
-    || (attr >= GX_VA_TEX0MTXIDX && attr <= GX_VA_TEX7MTXIDX)) {
-        return "uint";
-    }
-
-    if(attr == GX_VA_CLR0 || attr == GX_VA_CLR1) {
-        return "vec4";
-    }
-
-    bool isSigned = false;
-    int numComponents = 1;
-
-    // GX_DIRECT
-    if((type == GX_S8) || (type == GX_S16)) {
-        isSigned = true;
-    }
-
-    if(attr >= GX_VA_TEX0 && attr <= GX_VA_TEX7) {
-        if(cnt == GX_TEX_ST) {
-            numComponents = 2;
-        }
-    } else if(attr == GX_VA_NRM) {
-        numComponents = 3;
-    } else {
-        if(cnt == GX_POS_XY) {
-            numComponents = 2;
-        } else {
-            numComponents = 3;
-        }
-    }
-
-    if(numComponents == 1 && type != GX_F32) {
-        return (isSigned ? "int" : "uint");
-    }
-
-    std::string vecString = "";
-
-    if(type != GX_F32) {
-        vecString += (isSigned ? "i" : "u");
-    }
-    vecString += std::format("vec{}", numComponents);
-    return vecString;
-}
-
 static bool CompileShader(GLuint& id, const char * source) {
     glShaderSource( id, 1, &source, NULL );
     glCompileShader( id );
@@ -252,56 +207,8 @@ void Shader::Activate() {
 void Shader::GenerateVertexSource() {
     mVertexSource = "#version 330 core \n";
 
-    //Create vertex layout
-    int currentLoc = 0;
-    if(mDescriptors[GX_VA_PNMTXIDX] != GX_NONE) {
-        mVertexSource += std::format("//layout (location = {}) in uint {};\n", currentLoc, VertexAttributeStrings[GX_VA_PNMTXIDX]);
-        currentLoc++;
-    }
-    
-    // Handle texmtxidx... attrs
-    int numTexMtxEnabled = 0;
-    for(int attr=GX_VA_TEX0MTXIDX; attr<=GX_VA_TEX7MTXIDX; attr++) {
-        if(mDescriptors[attr] != GX_NONE) {
-            numTexMtxEnabled++;
-        }
-    }
-
-    if(numTexMtxEnabled > 0) {
-        mVertexSource += std::format("//layout(location = {}) in uvec4 texMtx0;\n", currentLoc);
-        currentLoc++;
-        if(numTexMtxEnabled > 4) {
-            mVertexSource += std::format("//layout(location = {}) in uvec4 texMtx1;\n", currentLoc);
-            currentLoc++;
-        }
-    }
-
-    for(int attr=GX_VA_POS; attr < GX_VA_MAX_ATTR; attr++) {
-        if(mDescriptors[attr] != GX_NONE) {
-            mVertexSource += std::format("//layout (location = {}) in {} {};\n",
-                currentLoc, 
-                GetTypeName(mDescriptors[attr], mFormat.mAttributes[attr].mDataType, 
-                            mFormat.mAttributes[attr].mComponents, static_cast<GXAttr>(attr)), 
-                VertexAttributeStrings[attr]);
-            mAttrLocations[attr] = currentLoc;
-            currentLoc++;
-        } else {
-            mAttrLocations[attr] = -1;
-        }
-    }
-
-    // No vertex attributes enabled. we need to make something that compiles and links
-    // but not display anything
-    if(currentLoc == 0) {
-
-    }
-
-    // Add outputs
-    mVertexSource += "//smooth out vec3 rasc;\n"
-                     "//smooth out float rasa;\n"
-                     "//smooth out vec2 gxTexCoords[8 /* GX_MAX_TEXCOORD */];\n";
-
-    printf("Compiling shader: \n%s\n\n=====\n", mVertexSource.c_str());
+    // Add const source
+    mVertexSource += std::string(SIM_GXVertexShader);
 
     mVertexSource += std::string(SIM_GXVertexShader);
 }
