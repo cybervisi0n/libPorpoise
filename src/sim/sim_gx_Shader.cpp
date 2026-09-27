@@ -209,8 +209,6 @@ void Shader::GenerateVertexSource() {
 
     // Add const source
     mVertexSource += std::string(SIM_GXVertexShader);
-
-    mVertexSource += std::string(SIM_GXVertexShader);
 }
 
 // Fragment shader will be constant for now
