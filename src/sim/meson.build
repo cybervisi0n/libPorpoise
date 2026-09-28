@@ -19,6 +19,8 @@ libsim_srcs = files(
     'sim_gx_State.cpp',
     'sim_gx_TextureManager.cpp',
     'sim_gx_Thread.cpp',
+    'sim_gx_VertexDecoderGeneric.cpp',
+    'sim_gx_VertexDecoderOneTri.cpp',
     'sim_pad.cpp',
     'sim_vi.cpp'
 )
@@ -27,7 +29,7 @@ libsim_dependencies = []
 libsim_includes = [libporpoise_includes]
 libsim_args = libporpoise_internal_shared_args
 
-libsim_args += ['-O2', '-Wall', '-Werror']
+libsim_args += ['-Wall', '-Werror']
 
 if(get_option('tracy_enable'))
 tracy_dep = dependency(
