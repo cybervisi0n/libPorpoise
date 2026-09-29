@@ -16,6 +16,7 @@
 
 #include "simulator/sim_gx_VertexDecoderGeneric.hpp"
 #include "simulator/sim_gx_VertexDecoderOnetri.hpp"
+#include "simulator/sim_gx_VertexDecoderFactory.hpp"
 
 namespace {
 
@@ -45,16 +46,24 @@ void GeometryProcessor::ProcessByteStream(std::vector<u8>& byteStream, std::endi
         const u8 * vertexDescriptorBytes = (const u8*)(vtxDescriptors.data());
         vertexCRC = SIM_updateCRC32buf(vertexCRC, vertexDescriptorBytes, sizeof(GXAttrType) * GX_VA_MAX_ATTR);
 
-        // onetri example 3229902983
+        mVertexDecoder = GetVertexDecoder(vertexCRC);
 
-        if(false && vertexCRC == 3229902983) {
-            printf("Loading onetri example vertex decoder\n");
-            mVertexDecoder = std::make_shared<VertexDecoderOnetri>();
-            //blah
-        } else {
+        if(mVertexDecoder == nullptr) {
             printf("Loading generic vertex interpreter\n");
             mVertexDecoder = std::make_shared<VertexDecoderGeneric>(vtxFormat, vtxDescriptors.data(), mNumBytesPerVertex);
         }
+
+
+
+        // onetri example 3229902983
+
+        //if(false && vertexCRC == 3229902983) {
+        //    printf("Loading onetri example vertex decoder\n");
+        //    mVertexDecoder = std::make_shared<VertexDecoderOnetri>();
+        //    //blah
+        //} else {
+//
+        //}
     }
 
     if (mNumBytesPerVertex == 0 || byteStream.empty() ||

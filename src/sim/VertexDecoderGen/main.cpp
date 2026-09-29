@@ -47,6 +47,15 @@ static constexpr std::array CompTypeStrings = {
     "f32"
 };
 
+static constexpr std::array ColorCompTypeStrings = {
+    "u16",
+    "u8",
+    "u8",
+    "u16",
+    "u8[3]",
+    "u8"
+};
+
 static constexpr std::array RenderVertexAttrStrings = {
     "posNormalMtxIdx",
     "texMtxIdx[0]",
@@ -60,6 +69,7 @@ static constexpr std::array RenderVertexAttrStrings = {
     "position.coords",
     "normal.coords",
     "color0.values",
+    "color1.values",
     "texCoords[0].coords",
     "texCoords[1].coords",
     "texCoords[2].coords",
@@ -147,7 +157,7 @@ static std::string GenerateClassDef(const FormatDescriptor& fmtDesc, u32 crc) {
     ret += "public:\n";
     ret += className + "() {};\n";
     ret += "virtual void DecodeVerts(u8 * byteStream, RenderVertex * vertsOut, size_t numVerts, std::endian endian);\n";
-    ret += "virtual ~" + className + "();\n";
+    ret += "virtual ~" + className + "() {};\n";
     ret += "private:\n";
     ret += GenerateBinaryVertexStruct(fmtDesc);
     ret += "static constexpr int BytesPerVertex = sizeof(BinaryVertex);\n";
@@ -168,10 +178,18 @@ static std::string GenerateDecodeFunc(const FormatDescriptor& fmtDesc, u32 crc) 
     ret += "const BinaryVertex * vertsIn = (const BinaryVertex * )(byteStream);\n";
     ret += "auto& gxState = GetGlobalState();\n";
 
+    // If any attribute is indexed, we need an extra pointer variable to use for the arrays
+    bool indexedAttr = false;
+
     for(int attrIdx = GX_VA_PNMTXIDX; attrIdx < GX_VA_MAX_ATTR; attrIdx++) {
         if(descriptors[attrIdx] == GX_INDEX8 || descriptors[attrIdx] == GX_INDEX16) {
             ret += std::format("const auto& {}Array = gxState.GetVertexArray(static_cast<GXAttr>({}));\n", VertexAttributeStrings[attrIdx], attrIdx);
+            indexedAttr = true;
         }
+    }
+
+    if(indexedAttr) {
+        ret += "const u8 * arrayCursor;\n";
     }
 
     ret += "for(size_t i=0; i < numVerts; i++) {\n";
@@ -182,25 +200,57 @@ static std::string GenerateDecodeFunc(const FormatDescriptor& fmtDesc, u32 crc) 
         }
 
         int numComponents = GetNumComponents(static_cast<GXAttr>(attrIdx), fmt.mAttributes[attrIdx].mComponents);
-        std::string sourceString = "";
+        std::string baseSourceString;
+        std::string baseTypeString;
+        if(attrIdx != GX_VA_CLR0 && attrIdx != GX_VA_CLR1) {
+            baseTypeString = CompTypeStrings[fmt.mAttributes[attrIdx].mDataType];
+        } else {
+            baseTypeString = ColorCompTypeStrings[fmt.mAttributes[attrIdx].mDataType];
+        }
+
+        baseSourceString = std::format("ReadUnaligned<{}>", baseTypeString);
         if(descriptors[attrIdx] == GX_DIRECT) {
-
+            baseSourceString += std::format("(const u8*)&(vertsIn.{}", VertexAttributeStrings[attrIdx]);
         } else if(descriptors[attrIdx] == GX_INDEX8 || descriptors[attrIdx] == GX_INDEX16) {
-
+            ret += std::format("arrayCursor = (u8*)({}Array.mArrayPtr) + ({}Array.mStride * vertsIn[i].{});\n", VertexAttributeStrings[attrIdx], VertexAttributeStrings[attrIdx], VertexAttributeStrings[attrIdx]);
+            baseSourceString += "(arrayCursor";
         }
 
         for(int i=0; i < numComponents; i++) {
             std::string arrayDestStr = "";
+            std::string sourceString = baseSourceString;
             if(numComponents > 1 || (attrIdx >= GX_VA_TEX0 && attrIdx <= GX_VA_TEX7)) {
                 arrayDestStr = std::format("[{}]", i);
+                if(descriptors[attrIdx] == GX_DIRECT) {
+                    sourceString += arrayDestStr;
+                    sourceString += ")";
+                }
+            }
+            if((descriptors[attrIdx] == GX_INDEX8) || (descriptors[attrIdx] == GX_INDEX16)) {
+                sourceString += std::format(" + (sizeof({}) * {})", baseTypeString, i);
             }
 
-            ret += std::format("vertsOut[i].{}{} = {}\n", RenderVertexAttrStrings[attrIdx], arrayDestStr, sourceString);
+            sourceString += ", endian)";
+
+            if(fmt.mAttributes[attrIdx].mFraction != 0) {
+                sourceString = "std::ldexp(static_cast<float>(" + sourceString + "), -" + std::to_string(fmt.mAttributes[attrIdx].mFraction) + ")";
+            }
+
+
+
+            ret += std::format("vertsOut[i].{}{} = {};\n", RenderVertexAttrStrings[attrIdx], arrayDestStr, sourceString);
         }
     }
 
     ret += "}\n";
     ret += "}\n";
+    return ret;
+}
+
+static std::string GenerateSwitchCase(u32 crc) {
+    std::string ret = "";
+    ret += std::format("case 0x{:08x}:\n", crc);
+    ret += std::format("return std::make_shared<{}>();\n", GetClassName(crc));
     return ret;
 }
 
@@ -216,12 +266,57 @@ int main(int argc, char ** argv) {
 
     // add includes
     ret += "#include <dolphin/types.h>\n";
+    ret += "#include \"simulator/sim_gx_Geometry.hpp\"\n";
     ret += "#include \"simulator/sim_gx_IVertexDecoder.hpp\"\n";
+    ret += "#include \"simulator/sim_gx_State.hpp\"\n";
+    ret += "#include \"simulator/byteswap.h\"\n";
+    ret += "#include <memory>\n";
+    ret += "#include <cstring>\n";
 
-    ret += "namespace SIM::GX {";
+// Add some common functions
+    ret += R""(
+static inline bool IsByteswapRequired(std::endian endian) {
+    return (std::endian::native != endian);
+}
+
+template <typename T>
+static inline T ReadUnaligned(const u8* source, std::endian endian) {
+    T value;
+    std::memcpy(&value, source, sizeof(value));
+    if(IsByteswapRequired(endian)) {
+        switch(sizeof(T)) {
+            case 1:
+                break;
+            case 2:
+                value = bswap_16(value);
+                break;
+            case 4:
+                {
+                    u32 * valuePtr = (u32*)&value;
+                    u32 value32 = bswap_32(*valuePtr);
+                    T * targetValuePtr = (T*)&value32;
+
+                    value = *targetValuePtr;
+                } break;
+            case 8:
+                value = bswap_64(value);
+                break;
+            default:
+                value = 0;
+                break;
+        }
+    }
+
+    return value;
+}
+)"";
+    ret += "\n\n";
+
+    ret += "namespace SIM::GX {\n\n";
 
     std::string classDefs = "";
     std::string implementations = "";
+    std::string switchCases = "";
 
     for(int i = 0; i < decoderCount; i++) {
         auto& fmt = decoderTable[i].first;
@@ -231,11 +326,20 @@ int main(int argc, char ** argv) {
         crcVal = SIM_updateCRC32buf(crcVal, (const u8*)(descriptors.data()), sizeof(GXAttrType) * GX_VA_MAX_ATTR);
         classDefs += GenerateClassDef(decoderTable[i], crcVal);
         implementations += GenerateDecodeFunc(decoderTable[i], crcVal);
+        switchCases += GenerateSwitchCase(crcVal);
 
     }
 
     ret += classDefs;
     ret += implementations;
+
+    ret += "std::shared_ptr<IVertexDecoder> GetVertexDecoder(u32 crc) {\n";
+    ret += "switch(crc) {\n";
+    ret += switchCases;
+    ret += "default:\n";
+    ret += "return nullptr;\n";
+    ret += "}\n";
+    ret += "}\n";
 
     ret += "}\n";
     printf("%s\n",  ret.c_str());
