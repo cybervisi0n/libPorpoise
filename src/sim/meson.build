@@ -1,3 +1,5 @@
+subdir('VertexDecoderGen')
+
 libsim_srcs = files(
     'glad.c',
     'sim_ai.cpp',
@@ -20,7 +22,7 @@ libsim_srcs = files(
     'sim_gx_TextureManager.cpp',
     'sim_gx_Thread.cpp',
     'sim_gx_VertexDecoderGeneric.cpp',
-    'sim_gx_VertexDecoderOneTri.cpp',
+    'sim_gx_VertexDecoderOnetri.cpp',
     'sim_pad.cpp',
     'sim_vi.cpp'
 )

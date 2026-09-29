@@ -1,7 +1,7 @@
 #include "simulator/sim_gx_VertexDecoderOnetri.hpp"
 
-#include "dolphin/GX/GXEnum.h"
-#include "dolphin/OS.h"
+#include "dolphin/gx/GXEnum.h"
+#include "dolphin/os.h"
 #include "simulator/byteswap.h"
 #include "simulator/sim_gx_Geometry.hpp"
 #include "simulator/sim_gx_State.hpp"

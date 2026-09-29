@@ -47,7 +47,7 @@ void GeometryProcessor::ProcessByteStream(std::vector<u8>& byteStream, std::endi
 
         // onetri example 3229902983
 
-        if(vertexCRC == 3229902983) {
+        if(false && vertexCRC == 3229902983) {
             printf("Loading onetri example vertex decoder\n");
             mVertexDecoder = std::make_shared<VertexDecoderOnetri>();
             //blah

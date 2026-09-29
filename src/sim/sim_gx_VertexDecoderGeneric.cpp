@@ -1,7 +1,7 @@
 #include "simulator/sim_gx_VertexDecoderGeneric.hpp"
 
-#include "dolphin/GX/GXEnum.h"
-#include "dolphin/OS.h"
+#include "dolphin/gx/GXEnum.h"
+#include "dolphin/os.h"
 #include "simulator/byteswap.h"
 #include "simulator/sim_gx_Geometry.hpp"
 
@@ -190,6 +190,47 @@ VertexDecoderGeneric::VertexDecoderGeneric(const VertexFormat& mFormat, const GX
     for(int i = 0; i < GX_VA_MAX_ATTR; i++) {
         mDescriptors[i] = descriptors[i];
     }
+
+    #if 1
+
+    static constexpr std::array CompTypeStrings = {
+        "GX_U8",
+        "GX_S8",
+        "GX_U16",
+        "GX_S16",
+        "GX_F32",
+        "GX_RGBA8"
+    };
+
+    static constexpr std::array CompCntStrings = {
+        "GX_POS_XY",
+        "GX_POS_XYZ",
+        "GX_NRM_NBT3"
+    };
+    static constexpr std::array DescriptorStrings = {
+        "GX_NONE",
+        "GX_DIRECT",
+        "GX_INDEX8",
+        "GX_INDEX16"
+    };
+    //print the format/descriptors
+    printf("FormatDescriptor(SIM::GX::VertexFormat{{{");
+    for(int attrIdx = GX_VA_PNMTXIDX; attrIdx < GX_VA_MAX_ATTR; attrIdx++) {
+        auto& attrFmt = mFormat.mAttributes[attrIdx];
+        printf("{%s, %s, %d}", CompCntStrings[attrFmt.mComponents], CompTypeStrings[attrFmt.mDataType], attrFmt.mFraction);
+        if(attrIdx < GX_VA_MAX_ATTR -1) {
+            printf(", ");
+        }
+    }
+    printf("}}}, {");
+    for(int attrIdx = GX_VA_PNMTXIDX; attrIdx < GX_VA_MAX_ATTR; attrIdx++) {
+        printf("%s", DescriptorStrings[(int)(mDescriptors[attrIdx])]);
+        if(attrIdx < GX_VA_MAX_ATTR -1) {
+            printf(", ");
+        }
+    }
+    printf("}),\n");
+    #endif
 
     auto& gxState = GetGlobalState();
 
