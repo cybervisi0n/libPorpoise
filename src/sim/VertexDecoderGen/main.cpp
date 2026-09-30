@@ -236,6 +236,10 @@ static std::string GenerateDecodeFunc(const FormatDescriptor& fmtDesc, u32 crc) 
                 sourceString = "std::ldexp(static_cast<float>(" + sourceString + "), -" + std::to_string(fmt.mAttributes[attrIdx].mFraction) + ")";
             }
 
+            if(attrIdx == GX_VA_CLR0 || attrIdx == GX_VA_CLR1) {
+                sourceString += " / 255.0f";
+            }
+
 
 
             ret += std::format("vertsOut[i].{}{} = {};\n", RenderVertexAttrStrings[attrIdx], arrayDestStr, sourceString);
