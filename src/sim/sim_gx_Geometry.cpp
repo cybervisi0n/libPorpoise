@@ -49,21 +49,8 @@ void GeometryProcessor::ProcessByteStream(std::vector<u8>& byteStream, std::endi
         mVertexDecoder = GetVertexDecoder(vertexCRC);
 
         if(mVertexDecoder == nullptr) {
-            printf("Loading generic vertex interpreter\n");
             mVertexDecoder = std::make_shared<VertexDecoderGeneric>(vtxFormat, vtxDescriptors.data(), mNumBytesPerVertex);
         }
-
-
-
-        // onetri example 3229902983
-
-        //if(false && vertexCRC == 3229902983) {
-        //    printf("Loading onetri example vertex decoder\n");
-        //    mVertexDecoder = std::make_shared<VertexDecoderOnetri>();
-        //    //blah
-        //} else {
-//
-        //}
     }
 
     if (mNumBytesPerVertex == 0 || byteStream.empty() ||

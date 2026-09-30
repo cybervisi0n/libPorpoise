@@ -211,13 +211,22 @@ class GlobalState {
     }
   };
   inline void SetVertexFormatComponents(GXVtxFmt formatIndex, GXAttr attrIndex, GXCompCnt component) {
-    mVertexFormats[formatIndex].mAttributes[attrIndex].mComponents = component;
+    if(component != mVertexFormats[formatIndex].mAttributes[attrIndex].mComponents) {
+      mVertexFormats[formatIndex].mAttributes[attrIndex].mComponents = component;
+      mVertexAttributesDirty = true;
+    }
   };
   inline void SetVertexFormatDataType(GXVtxFmt formatIndex, GXAttr attrIndex, GXCompType dataType) {
-    mVertexFormats[formatIndex].mAttributes[attrIndex].mDataType = dataType;
+    if(dataType != mVertexFormats[formatIndex].mAttributes[attrIndex].mDataType) {
+      mVertexFormats[formatIndex].mAttributes[attrIndex].mDataType = dataType;
+      mVertexAttributesDirty = true;
+    }
   };
   inline void SetVertexFormatFraction(GXVtxFmt formatIndex, GXAttr attrIndex, u8 fraction) {
-    mVertexFormats[formatIndex].mAttributes[attrIndex].mFraction = fraction;
+    if(fraction != mVertexFormats[formatIndex].mAttributes[attrIndex].mFraction) {
+      mVertexFormats[formatIndex].mAttributes[attrIndex].mFraction = fraction;
+      mVertexAttributesDirty = true;
+    }
   };
   void SetXfData(u32 address, const u8* data, size_t wordCount);
   inline void SetNumTexGens(u8 numTexGens) { mNumTexGens = numTexGens; };

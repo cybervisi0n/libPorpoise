@@ -119,15 +119,28 @@ static std::string GetTypeString(GXAttr attr, GXAttrType descriptor, GXCompType 
     std::string arrayTypeString = "";
     if(attr != GX_VA_CLR0 && attr != GX_VA_CLR1) {
         baseTypeString = CompTypeStrings[compType];
+    } else {
+        baseTypeString = ColorCompTypeStrings[compType];
+    }
+
+    return baseTypeString;
+}
+
+static std::string GetArrayTypeString(GXAttr attr, GXAttrType descriptor, GXCompType compType, GXCompCnt compCnt) {
+    std::string arrayTypeString = "";
+    if(descriptor == GX_INDEX8 || descriptor == GX_INDEX16) {
+        return arrayTypeString;
     }
 
     int components = GetNumComponents(attr, compCnt);
     if(components > 1) {
         arrayTypeString = std::format("[{}]", components);
-    }
+    }   
 
-    return baseTypeString + arrayTypeString;
+    return arrayTypeString;
 }
+
+
 
 static std::string GenerateBinaryVertexStruct(const FormatDescriptor& fmtDesc) {
     std::string ret = "struct BinaryVertex {\n";
@@ -135,9 +148,10 @@ static std::string GenerateBinaryVertexStruct(const FormatDescriptor& fmtDesc) {
     const auto& descriptors = fmtDesc.second;
     for(int attrIdx = GX_VA_PNMTXIDX; attrIdx < GX_VA_MAX_ATTR; attrIdx++) {
         if(descriptors[attrIdx] != GX_NONE) {
-            ret += std::format("    {} {};\n", 
+            ret += std::format("    {} {}{};\n", 
                 GetTypeString(static_cast<GXAttr>(attrIdx), descriptors[attrIdx], fmt.mAttributes[attrIdx].mDataType, fmt.mAttributes[attrIdx].mComponents),
-                VertexAttributeStrings[attrIdx]
+                VertexAttributeStrings[attrIdx],
+                GetArrayTypeString(static_cast<GXAttr>(attrIdx), descriptors[attrIdx], fmt.mAttributes[attrIdx].mDataType, fmt.mAttributes[attrIdx].mComponents)
             );
         }
     }
@@ -176,7 +190,7 @@ static std::string GenerateDecodeFunc(const FormatDescriptor& fmtDesc, u32 crc) 
     ret += std::format("void {}::DecodeVerts(u8 * byteStream, RenderVertex * vertsOut, size_t numVerts, std::endian endian)", className);
     ret += "{\n";
     ret += "const BinaryVertex * vertsIn = (const BinaryVertex * )(byteStream);\n";
-    ret += "auto& gxState = GetGlobalState();\n";
+    ret += "[[maybe_unused]] auto& gxState = GetGlobalState();\n";
 
     // If any attribute is indexed, we need an extra pointer variable to use for the arrays
     bool indexedAttr = false;
@@ -210,9 +224,14 @@ static std::string GenerateDecodeFunc(const FormatDescriptor& fmtDesc, u32 crc) 
 
         baseSourceString = std::format("ReadUnaligned<{}>", baseTypeString);
         if(descriptors[attrIdx] == GX_DIRECT) {
-            baseSourceString += std::format("(const u8*)&(vertsIn.{}", VertexAttributeStrings[attrIdx]);
-        } else if(descriptors[attrIdx] == GX_INDEX8 || descriptors[attrIdx] == GX_INDEX16) {
-            ret += std::format("arrayCursor = (u8*)({}Array.mArrayPtr) + ({}Array.mStride * vertsIn[i].{});\n", VertexAttributeStrings[attrIdx], VertexAttributeStrings[attrIdx], VertexAttributeStrings[attrIdx]);
+            baseSourceString += std::format("((const u8*)&(vertsIn[i].{}", VertexAttributeStrings[attrIdx]);
+        } else if(descriptors[attrIdx] == GX_INDEX16) {
+            ret += "arrayCursor = endian == std::endian::native ? ";
+            ret += std::format("((u8*)({}Array.mArrayPtr) + ({}Array.mStride * vertsIn[i].{})):\n", VertexAttributeStrings[attrIdx], VertexAttributeStrings[attrIdx], VertexAttributeStrings[attrIdx]);
+            ret += std::format("((u8*)({}Array.mArrayPtr) + ({}Array.mStride * bswap_16(vertsIn[i].{})));\n", VertexAttributeStrings[attrIdx], VertexAttributeStrings[attrIdx], VertexAttributeStrings[attrIdx]);
+            baseSourceString += "(arrayCursor";
+        } else if(descriptors[attrIdx] == GX_INDEX8) {
+            ret += std::format("arrayCursor = ((u8*)({}Array.mArrayPtr) + ({}Array.mStride * vertsIn[i].{}));\n", VertexAttributeStrings[attrIdx], VertexAttributeStrings[attrIdx], VertexAttributeStrings[attrIdx]);
             baseSourceString += "(arrayCursor";
         }
 
@@ -226,6 +245,10 @@ static std::string GenerateDecodeFunc(const FormatDescriptor& fmtDesc, u32 crc) 
                     sourceString += ")";
                 }
             }
+            if(numComponents == 1 && descriptors[attrIdx] == GX_DIRECT) {
+                sourceString += ")";
+            }
+            
             if((descriptors[attrIdx] == GX_INDEX8) || (descriptors[attrIdx] == GX_INDEX16)) {
                 sourceString += std::format(" + (sizeof({}) * {})", baseTypeString, i);
             }
