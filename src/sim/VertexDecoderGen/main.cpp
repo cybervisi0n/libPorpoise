@@ -259,6 +259,11 @@ int main(int argc, char ** argv) {
     int decoderCount = GetDecoderTableCount();
     const auto * decoderTable = GetDecoderTable();
 
+    if(argc < 2) {
+        printf("Usage: VertexDecoderGen {outputFilePath}\n");
+        return -1;
+    }
+
 
 
 
@@ -342,7 +347,11 @@ static inline T ReadUnaligned(const u8* source, std::endian endian) {
     ret += "}\n";
 
     ret += "}\n";
-    printf("%s\n",  ret.c_str());
+
+    FILE * outputFile = fopen(argv[1], "w");
+
+    fprintf(outputFile, "%s", ret.c_str());
+    fclose(outputFile);
 
     return 0;
 }

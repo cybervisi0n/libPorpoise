@@ -21,3 +21,8 @@ vertex_decoder_gen_exe = executable(
     link_args: [ vertex_decoder_gen_link_args ],
     native: true,
 )
+
+vertex_decoder_factory_cpp = custom_target('VertexDecoderFactoryGen.cpp',
+    output: 'VertexDecoderFactoryGen.cpp',
+    command: [vertex_decoder_gen_exe, '@OUTPUT@']
+)

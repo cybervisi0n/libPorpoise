@@ -24,8 +24,7 @@ libsim_srcs = files(
     'sim_gx_VertexDecoderGeneric.cpp',
     'sim_gx_VertexDecoderOnetri.cpp',
     'sim_pad.cpp',
-    'sim_vi.cpp',
-    'sim_gx_VertexDecoderFactory.cpp'
+    'sim_vi.cpp'
 )
 
 libsim_dependencies = []
@@ -67,7 +66,7 @@ libsim = library('sim',
     dependencies: libsim_dependencies,
     c_args: libsim_args,
     cpp_args: libsim_args,
-    sources: [libsim_srcs],
+    sources: [libsim_srcs, vertex_decoder_factory_cpp],
     native: true
 )
 
