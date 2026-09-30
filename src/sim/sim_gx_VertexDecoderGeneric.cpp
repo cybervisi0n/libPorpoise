@@ -8,6 +8,8 @@
 #include <bit>
 #include <cstring>
 
+#define PRINT_FORMAT_DESCRIPTOR 0
+
 namespace SIM::GX {
 
 static bool IsByteswapRequired(std::endian endian) {
@@ -191,7 +193,7 @@ VertexDecoderGeneric::VertexDecoderGeneric(const VertexFormat& mFormat, const GX
         mDescriptors[i] = descriptors[i];
     }
 
-    #if 1
+    #if PRINT_FORMAT_DESCRIPTOR
 
     static constexpr std::array CompTypeStrings = {
         "GX_U8",
