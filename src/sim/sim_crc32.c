@@ -55,17 +55,18 @@ u32 SIM_updateCRC32(u8 ch, u32 crc)
       return UPDC32(ch, crc);
 }
 
-u32 SIM_crc32buf(u8 *buf, size_t len)
+u32 SIM_crc32buf(const u8 *buf, size_t len)
 {
-      u32 oldcrc32;
+      return SIM_updateCRC32buf(0xFFFFFFFF, buf, len);  
+}
 
-      oldcrc32 = 0xFFFFFFFF;
+u32 SIM_updateCRC32buf(u32 prevCRC, const u8* buf, size_t len) {
+      u32 oldcrc32 = prevCRC;
 
       for ( ; len; --len, ++buf)
       {
             oldcrc32 = UPDC32(*buf, oldcrc32);
       }
 
-      return ~oldcrc32;
-      
+      return ~oldcrc32;  
 }

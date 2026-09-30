@@ -1,3 +1,5 @@
+subdir('VertexDecoderGen')
+
 libsim_srcs = files(
     'glad.c',
     'sim_ai.cpp',
@@ -19,6 +21,8 @@ libsim_srcs = files(
     'sim_gx_State.cpp',
     'sim_gx_TextureManager.cpp',
     'sim_gx_Thread.cpp',
+    'sim_gx_VertexDecoderGeneric.cpp',
+    'sim_gx_VertexDecoderOnetri.cpp',
     'sim_pad.cpp',
     'sim_vi.cpp'
 )
@@ -27,7 +31,7 @@ libsim_dependencies = []
 libsim_includes = [libporpoise_includes]
 libsim_args = libporpoise_internal_shared_args
 
-libsim_args += ['-O2', '-Wall', '-Werror']
+libsim_args += [ '-O2', '-Wall', '-Werror']
 
 if(get_option('tracy_enable'))
 tracy_dep = dependency(
@@ -62,7 +66,7 @@ libsim = library('sim',
     dependencies: libsim_dependencies,
     c_args: libsim_args,
     cpp_args: libsim_args,
-    sources: [libsim_srcs],
+    sources: [libsim_srcs, vertex_decoder_factory_cpp],
     native: true
 )
 

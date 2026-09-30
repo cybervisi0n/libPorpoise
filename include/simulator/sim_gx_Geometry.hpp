@@ -1,10 +1,14 @@
 #ifndef LIBPORPOISE_SIM_GX_GEOMETRY_HPP
 #define LIBPORPOISE_SIM_GX_GEOMETRY_HPP
 
+#include <array>
 #include <bit>
+#include <memory>
 #include <vector>
 
 #include <dolphin/types.h>
+
+#include "simulator/sim_gx_IVertexDecoder.hpp"
 
 namespace SIM::GX {
 
@@ -61,6 +65,8 @@ class GeometryProcessor {
   //std::vector<RenderVertex> mRenderVerts;
   RenderVertex * mRenderVerts = nullptr;
   size_t mRenderVertsSize = 0;
+  std::shared_ptr<IVertexDecoder> mVertexDecoder = nullptr;
+  size_t mNumBytesPerVertex = 1;
 };
 
 }
