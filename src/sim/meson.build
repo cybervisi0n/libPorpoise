@@ -15,6 +15,7 @@ libsim_srcs = files(
     'sim_memory.cpp',
     'sim_globals.c',
     'sim_gx_CommandProcessor.cpp',
+    'sim_gx_FramebufferManager.cpp',
     'sim_gx_GlRenderer.cpp',
     'sim_gx_Geometry.cpp',
     'sim_gx_Shader.cpp',

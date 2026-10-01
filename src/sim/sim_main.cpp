@@ -10,6 +10,7 @@
 #include <simulator/sim_audio.hpp>
 #include <simulator/sim_card.hpp>
 #include <simulator/sim_dsp.hpp>
+#include <simulator/sim_gx_FramebufferManager.hpp>
 #include <simulator/sim_gx_State.hpp>
 #include <simulator/sim_memory.hpp>
 #include <simulator/sim_pad.hpp>
@@ -269,6 +270,7 @@ void SIM_Render() {
     FrameMarkEnd("GameLoop");
     #endif
     SDL_Event Event;
+    auto& renderer = SIM::GX::GetGlRenderer();
 
     while( SDL_PollEvent(&Event))
     {
@@ -295,12 +297,17 @@ void SIM_Render() {
         }
     }
 
+    renderer.DrawScreen();
+
     SDL_GL_SwapWindow(window);
 
     #ifdef TRACY_ENABLE
     FrameMarkNamed("VBlank");
     FrameMark;
     #endif
+
+    // Activate EFB
+    //SIM::GX::FramebufferManager::GetInstance().GetEfb()->Activate();
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f );
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT );

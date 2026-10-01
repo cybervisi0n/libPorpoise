@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include <simulator/glad/glad.h>
+#include <simulator/sim_gx_FramebufferManager.hpp>
 #include <simulator/sim_gx_Geometry.hpp>
 #include <simulator/sim_gx_Shader.hpp>
 #include <simulator/sim_gx_State.hpp>
@@ -14,6 +15,17 @@
 #ifdef TRACY_ENABLE
 #include <tracy/Tracy.hpp>
 #endif
+#include <SDL2/SDL.h>
+
+
+static const char * ScreenVertexShader = 
+#include "shaders/screenVertex.glsl"
+;
+
+static const char * ScreenFragmentShader = 
+#include "shaders/screenFragment.glsl"
+;
+
 
 namespace {
 
@@ -56,8 +68,9 @@ void GlRenderer::Initialize() {
 
     glGenVertexArrays(1, &mVertexArray);
     glGenBuffers(1, &mVertexBuffer);
-    glBindVertexArray(mVertexArray);
+    
     glBindBuffer(GL_ARRAY_BUFFER, mVertexBuffer);
+    glBindVertexArray(mVertexArray);
 
     //location = 0 in vec3 position
     glEnableVertexAttribArray(0);
@@ -149,6 +162,93 @@ void GlRenderer::Initialize() {
 
     GLint shaderProgram = 0;
     glGetIntegerv(GL_CURRENT_PROGRAM, &shaderProgram);
+
+    // Set up the screen rendering objects
+    glGenVertexArrays(1, &mScreenVertexArray);
+    glGenBuffers(1, &mScreenVertexBuffer);
+    glBindVertexArray(mScreenVertexArray);
+    glBindBuffer(GL_ARRAY_BUFFER, mScreenVertexBuffer);
+    glBufferData(
+            GL_ARRAY_BUFFER,
+            static_cast<GLsizeiptr>(6 * sizeof(ScreenVertex)),
+            nullptr,
+            GL_STREAM_DRAW);
+
+    //location = 0 in vec3 position
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(
+        0,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        sizeof(ScreenVertex),
+        reinterpret_cast<void*>(offsetof(ScreenVertex, x)));
+    //location = 1 in vec2 texCoords
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(
+        1,
+        2,
+        GL_FLOAT,
+        GL_FALSE,
+        sizeof(ScreenVertex),
+        reinterpret_cast<void*>(offsetof(ScreenVertex, s)));
+
+    // Compile and setup screen shader
+    mScreenVertexShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource( mScreenVertexShader, 1, &ScreenVertexShader, NULL );
+    glCompileShader( mScreenVertexShader );
+    GLint status;
+    glGetShaderiv(mScreenVertexShader, GL_COMPILE_STATUS, &status);
+    if( status != GL_TRUE )
+    {
+        GLint logSize;
+        glGetShaderiv(mScreenVertexShader, GL_INFO_LOG_LENGTH, &logSize);
+        GLchar * errorBuf = new GLchar[logSize];
+        glGetShaderInfoLog(mScreenVertexShader, logSize, &logSize, (GLchar *)errorBuf);
+        std::string errorMessageString = "Error compiling shader:\n" + std::string((char*)errorBuf);
+        SDL_ShowSimpleMessageBox(0, "Error compiling shader", errorMessageString.c_str(), nullptr);
+        delete[] errorBuf;
+    }
+
+    mScreenFragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource( mScreenFragmentShader, 1, &ScreenFragmentShader, NULL );
+    glCompileShader( mScreenFragmentShader );
+    glGetShaderiv(mScreenFragmentShader, GL_COMPILE_STATUS, &status);
+    if( status != GL_TRUE )
+    {
+        GLint logSize;
+        glGetShaderiv(mScreenFragmentShader, GL_INFO_LOG_LENGTH, &logSize);
+        GLchar * errorBuf = new GLchar[logSize];
+        glGetShaderInfoLog(mScreenFragmentShader, logSize, &logSize, (GLchar *)errorBuf);
+        std::string errorMessageString = "Error compiling shader:\n" + std::string((char*)errorBuf);
+        SDL_ShowSimpleMessageBox(0, "Error compiling shader", errorMessageString.c_str(), nullptr);
+        delete[] errorBuf;
+    }
+
+    mScreenShaderProgram = glCreateProgram();
+
+    glAttachShader( mScreenShaderProgram, mScreenVertexShader );
+    glAttachShader( mScreenShaderProgram, mScreenFragmentShader );
+    glLinkProgram( mScreenShaderProgram );
+
+    GLint logSize;
+    glGetProgramiv( mScreenShaderProgram, GL_LINK_STATUS, &status );
+    if( status != GL_TRUE )
+    {
+        glGetProgramiv(mScreenShaderProgram, GL_INFO_LOG_LENGTH, &logSize);
+        GLchar * errorBuf = new GLchar[logSize];
+        glGetProgramInfoLog(mScreenShaderProgram, logSize, &logSize, (GLchar *)errorBuf);
+        std::string errorMessageString = "Error linking shader:\n" + std::string((char*)errorBuf);
+        SDL_ShowSimpleMessageBox(0, "Error linking shader", errorMessageString.c_str(), nullptr);
+        delete[] errorBuf;
+    }
+
+    glUseProgram(mScreenShaderProgram);
+
+    int textureLocation = glGetUniformLocation(static_cast<GLuint>(mScreenShaderProgram), "screenTexture");
+    glUniform1ui(textureLocation, 0);
+
+    glBindVertexArray(mVertexArray);
 
     // Create default shader
     auto& gxState = GetGlobalState();
@@ -386,6 +486,44 @@ void GlRenderer::Draw(const RenderVertex * vertices, size_t numVertices, GXPrimi
         mCurrentShader->SetNumTevStages(gxState.GetNumTevStages());
         gxState.SetNumTevStagesDirty(false);
     }
+}
+
+// Draws a full screen quad with the current XFB as a texture
+void GlRenderer::DrawScreen() {
+    if(mVertexArray == 0) {
+        return;
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+    static constexpr ScreenVertex ScreenQuad[] = {
+        { -1.0f, -1.0f, 0.0f, 0.0f, 0.0f },
+        { -1.0f, 1.0f, 0.0f, 0.0f, 1.0f },
+        { 1.0f, 1.0f, 0.0f, 1.0f, 1.0f },
+        { 1.0f, 1.0f, 0.0f, 1.0f, 1.0f },
+        { 1.0f, -1.0f, 0.0f, 1.0f, 0.0f },
+        { -1.0f, -1.0f, 0.0f, 0.0f, 0.0f }
+    };
+
+    glUseProgram(mScreenShaderProgram);
+    glBindVertexArray(mScreenVertexArray);
+    glBindBuffer(GL_ARRAY_BUFFER, mScreenVertexBuffer);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, FramebufferManager::GetInstance().GetEfb()->GetTexture());
+    glBufferSubData(
+            GL_ARRAY_BUFFER,
+            0,
+            static_cast<GLsizeiptr>(6 * sizeof(ScreenVertex)),
+            ScreenQuad
+        );
+
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    glBindVertexArray(mVertexArray);
+    glBindBuffer(GL_ARRAY_BUFFER, mVertexBuffer);
+    mCurrentShader->Activate();
+    GetGlobalState().SetTextureDirty(true);
+    FramebufferManager::GetInstance().GetEfb()->Activate();
 }
 
 bool GlRenderer::IsIndexed(GXPrimitive prim) {

@@ -1,5 +1,8 @@
 #include <dolphin/gx.h>
 #include <dolphin/hw_regs.h>
+#ifdef LIBPORPOISE_PORT
+#include "simulator/sim_memory.h"
+#endif
 
 GXRenderModeObj GXNtsc240Ds = {
 	1,
@@ -843,7 +846,12 @@ void GXCopyDisp(void* dest, GXBool clear)
 	GX_WRITE_RAS_REG(gx->cpDispSize);
 	GX_WRITE_RAS_REG(gx->cpDispStride);
 
+	#ifdef LIBPORPOISE_PORT
+	phyAddr = SIM_Memory_CreateMemoryHandle(dest);
+	phyAddr = phyAddr << 5;
+	#else
 	phyAddr = (u32)dest & 0x3FFFFFFF;
+	#endif
 	reg     = 0;
 	SET_REG_FIELD(0x5D8, reg, 21, 0, phyAddr >> 5);
 	SET_REG_FIELD(0x5D9, reg, 8, 24, 0x4B);

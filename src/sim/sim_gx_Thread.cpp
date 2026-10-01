@@ -5,6 +5,7 @@
 #include "simulator/sim_gx_Thread.h"
 #include "simulator/sim_gx_GlRenderer.hpp"
 #include "simulator/sim_gx_CommandProcessor.hpp"
+#include "simulator/sim_gx_FramebufferManager.hpp"
 #include "simulator/sim_gx_State.hpp"
 #include "simulator/sim_gx_TextureManager.hpp"
 #include "simulator/sim_MessageQueue.hpp"
@@ -28,6 +29,7 @@ static SDL_mutex * sFifoMutex;
 
 namespace SIM::GX {
 void Init() {
+    FramebufferManager::GetInstance().Init();
     InitGlobalState();
 
     sGxMainThread = SDL_CreateThread(MainThread, "SIM::GX", nullptr);

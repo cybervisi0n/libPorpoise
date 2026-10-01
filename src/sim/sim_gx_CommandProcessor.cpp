@@ -4,6 +4,7 @@
 
 #include <dolphin.h>
 #include <simulator/sim_gx_CommandProcessor.hpp>
+#include <simulator/sim_gx_GlRenderer.hpp>
 #include <simulator/sim_gx_State.hpp>
 #include <simulator/sim_gx_Thread.hpp>
 #include <simulator/sim.h>
@@ -423,6 +424,34 @@ void CommandProcessor::ProcessBpReg(u8 regAddr, u32 value) {
             gxState.SetDepthCompareEnabled(GetRegValue(value, 1, 0) != 0);
             gxState.SetDepthFunc(static_cast<GXCompare>(GetRegValue(value, 3, 1)));
             gxState.SetDepthUpdateEnabled(GetRegValue(value, 1, 4) != 0);
+        } break;
+        // CpDispSrc
+        case 0x49: {
+            u16 x = GetRegValue(value, 10, 0);
+            u16 y = GetRegValue(value, 10, 10);
+
+            gxState.SetEfbCopyXY(x, y);
+        } break;
+        // CpDispSize
+        case 0x4A: {
+            u16 width = GetRegValue(value, 10, 0);
+            u16 height = GetRegValue(value, 10, 10);
+
+            gxState.SetEfbCopyWidthHeight(width, height);
+        } break;
+        // EFB Copy dest
+        case 0x4B: {
+            void * efbCopyDest = SIM::Memory::MemoryHandleToAddress(value & 0x00FFFFFF);
+            gxState.SetEfbCopyDest(efbCopyDest);
+        } break;
+        // CpDispCopyStride
+        case 0x4D: {
+
+        } break;
+        // EFB Copy Trigger
+        case 0x52: {
+            // This should flush the rendering pipeline and then do the copy
+            GetGlRenderer().FlushRenderVerts();
         } break;
         // TLUT Load
         case 0x64:

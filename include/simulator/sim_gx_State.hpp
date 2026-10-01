@@ -255,6 +255,9 @@ class GlobalState {
   inline void SetDepthUpdateEnabled(bool enabled) { mDepthUpdateEnabled = enabled; mDepthDirty = true;};
   inline void SetDepthFunc(GXCompare func) { mDepthFunc = func; mDepthDirty = true;};
   inline void SetDepthDirty(bool dirty) { mDepthDirty = dirty; };
+  inline void SetEfbCopyDest(void * dest) { mEfbCopyDest = dest; };
+  inline void SetEfbCopyXY(u16 x, u16 y) { mEfbCopyX = x; mEfbCopyY = y; };
+  inline void SetEfbCopyWidthHeight(u16 width, u16 height) {mEfbCopyWidth = width; mEfbCopyHeight = height;};
   void AddNativeEndianDisplayList(void * displayListPtr);
   bool IsDisplayListNativeEndian(void * displayListPtr);
 
@@ -297,6 +300,11 @@ class GlobalState {
   std::array<u8, GX_MAX_TEXMAP> mTlutAssignments = {};
   std::array<Light, 8> mLights = {};
   std::array<ColorChannel, 4> mColorChannels = {};
+  void * mEfbCopyDest = nullptr;
+  u16 mEfbCopyX = 0;
+  u16 mEfbCopyY = 0;
+  u16 mEfbCopyWidth = 0;
+  u16 mEfbCopyHeight = 0;
   bool mTextureDirty = true;
   bool mTevDirty = true;
   GXCompare mDepthFunc;

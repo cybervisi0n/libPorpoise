@@ -17,6 +17,8 @@ class GlRenderer {
   void Draw(const RenderVertex * vertices, size_t numVertices, GXPrimitive primitive);
   void FlushRenderVerts();
 
+  void DrawScreen();
+
   inline int GetBatchableDrawcalls() {return mBatchableDrawcalls; };
   inline void ResetBatchableDrawcalls() {mBatchableDrawcalls = 0; };
 
@@ -24,6 +26,14 @@ class GlRenderer {
   inline void ResetTotalDrawcalls() {mTotalDrawcalls = 0; };
 
  private:
+  // Trivial vertex structure for rendering the full screen
+  struct ScreenVertex {
+    float x;
+    float y;
+    float z;
+    float s;
+    float t;
+  };
   void Initialize();
   void ReserveRenderVerts(int numAdditionalVerts);
   void ReserveRenderIndices(int numAdditionalIndices);
@@ -35,9 +45,14 @@ class GlRenderer {
   unsigned int mVertexArray = 0;
   unsigned int mVertexBuffer = 0;
   unsigned int mElementBuffer = 0;
+  unsigned int mScreenVertexArray = 0;
+  unsigned int mScreenVertexBuffer = 0;
   unsigned int mTevStageUniformBuffer = 0;
   unsigned int mLightsUniformBuffer = 0;
   unsigned int mMatrixMemoryUniformBuffer = 0;
+  s32 mScreenShaderProgram;
+  unsigned int mScreenVertexShader = 0;
+  unsigned int mScreenFragmentShader = 0;
 
   RenderVertex * mRenderVerts = nullptr;
   
