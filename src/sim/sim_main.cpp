@@ -271,6 +271,7 @@ void SIM_Render() {
     #endif
     SDL_Event Event;
     auto& renderer = SIM::GX::GetGlRenderer();
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     while( SDL_PollEvent(&Event))
     {
@@ -307,7 +308,7 @@ void SIM_Render() {
     #endif
 
     // Activate EFB
-    //SIM::GX::FramebufferManager::GetInstance().GetEfb()->Activate();
+    SIM::GX::FramebufferManager::GetInstance().GetEfb()->Activate();
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f );
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT );

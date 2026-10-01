@@ -523,7 +523,6 @@ void GlRenderer::DrawScreen() {
     glBindBuffer(GL_ARRAY_BUFFER, mVertexBuffer);
     mCurrentShader->Activate();
     GetGlobalState().SetTextureDirty(true);
-    FramebufferManager::GetInstance().GetEfb()->Activate();
 }
 
 bool GlRenderer::IsIndexed(GXPrimitive prim) {
