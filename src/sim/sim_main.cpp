@@ -265,6 +265,9 @@ int main(int argc, char** argv) {
 void SIM_VIInit() {
 }
 
+static int sWindowWidth = 640;
+static int sWindowHeight = 480;
+
 void SIM_Render() {
     #ifdef TRACY_ENABLE
     FrameMarkEnd("GameLoop");
@@ -272,6 +275,7 @@ void SIM_Render() {
     SDL_Event Event;
     auto& renderer = SIM::GX::GetGlRenderer();
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(0, 0, sWindowWidth, sWindowHeight);
 
     while( SDL_PollEvent(&Event))
     {
@@ -284,7 +288,8 @@ void SIM_Render() {
                 break;
             case SDL_WINDOWEVENT:
                 if(Event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
-                    glViewport(0, 0, Event.window.data1, Event.window.data2);
+                    sWindowWidth = Event.window.data1;
+                    sWindowHeight = Event.window.data2;
                 }
                 break;
             case SDL_QUIT:

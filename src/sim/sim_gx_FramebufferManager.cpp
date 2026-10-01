@@ -46,6 +46,7 @@ void EmbeddedFramebuffer::Activate() {
     glBindRenderbuffer(GL_RENDERBUFFER, mRboId);
     GLenum drawBufs[] = {GL_COLOR_ATTACHMENT0};
     glDrawBuffers(1, drawBufs);
+    glViewport(0, 0, 640, 480);
 }
 
 FramebufferManager::FramebufferManager() {
