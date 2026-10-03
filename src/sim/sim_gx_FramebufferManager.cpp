@@ -58,6 +58,7 @@ void FramebufferTexture::CopyFrom(const FramebufferTexture& source, u16 xOffset,
 EmbeddedFramebuffer::EmbeddedFramebuffer() : FramebufferTexture(640, 480) {
     glGenFramebuffers(1, &mFboId);
     glGenRenderbuffers(1, &mRboId);
+    SetInternalRes(1);
     
     glBindFramebuffer(GL_FRAMEBUFFER, mFboId);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, mRboId);
@@ -72,8 +73,10 @@ EmbeddedFramebuffer::~EmbeddedFramebuffer() {
 
 void EmbeddedFramebuffer::SetInternalRes(u32 internalRes) {
     FramebufferTexture::SetInternalRes(internalRes);
+    glBindFramebuffer(GL_FRAMEBUFFER, mFboId);
     glBindRenderbuffer(GL_RENDERBUFFER, mRboId);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, mWidth *internalRes, mHeight * internalRes);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, mRboId);
 }
 
 
