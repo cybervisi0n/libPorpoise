@@ -47,17 +47,25 @@ void HandleKey(SDL_Keycode key, bool isDown) {
             SetButtonBit(button, PAD_BUTTON_Y, isDown);
             break;
 
+        // L/R btns
+        case SDLK_q:
+            SetButtonBit(button, PAD_TRIGGER_L, isDown);
+            break;
+        case SDLK_e:
+            SetButtonBit(button, PAD_TRIGGER_R, isDown);
+            break;
+
         case SDLK_UP:
             SetButtonBit(button, PAD_BUTTON_UP, isDown);
             break;
         case SDLK_DOWN:
-            SetButtonBit(button, PAD_BUTTON_UP, isDown);
+            SetButtonBit(button, PAD_BUTTON_DOWN, isDown);
             break;
         case SDLK_LEFT:
-            SetButtonBit(button, PAD_BUTTON_UP, isDown);
+            SetButtonBit(button, PAD_BUTTON_LEFT, isDown);
             break;
         case SDLK_RIGHT:
-            SetButtonBit(button, PAD_BUTTON_UP, isDown);
+            SetButtonBit(button, PAD_BUTTON_RIGHT, isDown);
             break;
 
         case SDLK_RETURN:

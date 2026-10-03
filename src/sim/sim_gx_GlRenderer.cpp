@@ -41,7 +41,6 @@ GLenum ToGlPrimitive(GXPrimitive primitive) {
         case GX_LINESTRIP:
             return GL_LINE_STRIP;
         case GX_TRIANGLEFAN:
-            return GL_TRIANGLE_FAN;
         case GX_TRIANGLES:
         case GX_TRIANGLESTRIP:
         case GX_QUADS:
@@ -402,6 +401,8 @@ void GlRenderer::Draw(const RenderVertex * vertices, size_t numVertices, GXPrimi
         ExpandQuadStrip(vertices, numVertices);
     } else if (primitive == GX_TRIANGLESTRIP) {
         ExpandTriangleStrip(vertices, numVertices);  
+    } else if (primitive == GX_TRIANGLEFAN) {
+        ExpandTriangleFan(vertices, numVertices); 
     } else {
         ReserveRenderVerts(numVertices);
         memcpy(&mRenderVerts[mRenderVertsCount], vertices, sizeof(RenderVertex) * numVertices);
@@ -544,11 +545,11 @@ bool GlRenderer::IsIndexed(GXPrimitive prim) {
         case GX_QUADS:
         case GX_QUADSTRIP:
         case GX_TRIANGLESTRIP:
+        case GX_TRIANGLEFAN:
             return true;
         case GX_LINES:
         case GX_POINTS:
         case GX_TRIANGLES:
-        case GX_TRIANGLEFAN:
         default:
             return false;
     }
@@ -642,6 +643,50 @@ void GlRenderer::ExpandTriangleStrip(
             indices[trianglesIdx++] = oldVertexCount + i;
         }
         indices[trianglesIdx++] = oldVertexCount + i + 2;
+    }
+
+    mRenderIndicesCount += numIndicesOut;
+}
+
+void GlRenderer::ExpandTriangleFan(
+    const SIM::GX::RenderVertex * vertices, size_t numVertices) {
+    ReserveRenderVerts(numVertices);
+    SIM::GX::RenderVertex * renderVertsOut = &mRenderVerts[mRenderVertsCount];
+    std::memcpy(renderVertsOut, vertices, sizeof(SIM::GX::RenderVertex) * numVertices);
+    u32 oldVertexCount = mRenderVertsCount;
+    mRenderVertsCount += numVertices;
+
+    // A strip needs at least 3 vertices to form a triangle
+    if (numVertices < 3) {
+        return;
+    }
+
+    int numTriangles = numVertices - 2;
+    int numIndicesOut = numTriangles * 3;
+    ReserveRenderIndices(numIndicesOut);
+
+    u32 * indices = &mRenderIndices[mRenderIndicesCount];
+    size_t trianglesIdx = 0;
+
+
+    // 1, 2, 3
+    // 1, 3, 4
+    // 1, 4, 5
+
+    for (size_t i = 1; i + 1 < numVertices; i++) {
+        // Every other triangle has its first two vertices swapped so that
+        // the winding order stays consistent across the whole strip
+        indices[trianglesIdx++] = oldVertexCount;
+        indices[trianglesIdx++] = oldVertexCount + i;
+        indices[trianglesIdx++] = oldVertexCount + i + 1;
+        //if ((i & 1) == 0) {
+        //    indices[trianglesIdx++] = oldVertexCount;
+        //    indices[trianglesIdx++] = oldVertexCount + i + 1;
+        //} else {
+        //    indices[trianglesIdx++] = oldVertexCount + i + 1;
+        //    indices[trianglesIdx++] = oldVertexCount + i;
+        //}
+        //indices[trianglesIdx++] = oldVertexCount + i + 2;
     }
 
     mRenderIndicesCount += numIndicesOut;
