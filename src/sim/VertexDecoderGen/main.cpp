@@ -253,7 +253,7 @@ static std::string GenerateDecodeFunc(const FormatDescriptor& fmtDesc, u32 crc) 
                 sourceString += std::format(" + (sizeof({}) * {})", baseTypeString, i);
             }
 
-            sourceString += ", endian)";
+            sourceString += ", std::endian::native)";
 
             if(fmt.mAttributes[attrIdx].mFraction != 0) {
                 sourceString = "std::ldexp(static_cast<float>(" + sourceString + "), -" + std::to_string(fmt.mAttributes[attrIdx].mFraction) + ")";
