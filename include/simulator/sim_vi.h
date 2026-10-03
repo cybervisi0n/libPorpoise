@@ -16,6 +16,8 @@ u32 GetWaitForRetraceCount();
 
 void SetPreRetraceCallback(VIRetraceCallback callback);
 void SetPostRetraceCallback(VIRetraceCallback callback);
+void SetNextFramebuf(void * addr);
+void * GetNextFramebuf();
 }
 #endif
 
@@ -28,6 +30,7 @@ void SIM_VIWaitForRetrace();
 u32 SIM_VIGetRetraceCount();
 void SIM_VISetPreRetraceCallback(VIRetraceCallback callback);
 void SIM_VISetPostRetraceCallback(VIRetraceCallback callback);
+void SIM_VISetNextFramebuf(void * addr);
 
 #ifdef __cplusplus
 }

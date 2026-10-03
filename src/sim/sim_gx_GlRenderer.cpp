@@ -12,6 +12,7 @@
 #include <simulator/sim_gx_Shader.hpp>
 #include <simulator/sim_gx_State.hpp>
 #include <simulator/sim_gx_TextureManager.hpp>
+#include <simulator/sim_vi.h>
 #ifdef TRACY_ENABLE
 #include <tracy/Tracy.hpp>
 #endif
@@ -488,6 +489,12 @@ void GlRenderer::Draw(const RenderVertex * vertices, size_t numVertices, GXPrimi
     }
 }
 
+// Clear the EFB
+void GlRenderer::Clear() {
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f );
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT );
+}
+
 // Draws a full screen quad with the current XFB as a texture
 void GlRenderer::DrawScreen() {
     if(mVertexArray == 0) {
@@ -509,15 +516,21 @@ void GlRenderer::DrawScreen() {
     glBindVertexArray(mScreenVertexArray);
     glBindBuffer(GL_ARRAY_BUFFER, mScreenVertexBuffer);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, FramebufferManager::GetInstance().GetEfb()->GetTexture());
-    glBufferSubData(
-            GL_ARRAY_BUFFER,
-            0,
-            static_cast<GLsizeiptr>(6 * sizeof(ScreenVertex)),
-            ScreenQuad
-        );
 
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    // Get the current VI framebuf texture
+    auto& fbMan = FramebufferManager::GetInstance();
+    std::shared_ptr<FramebufferTexture> xfb = fbMan.GetTexture(SIM::VI::GetNextFramebuf());
+    if(xfb != nullptr) {
+        glBindTexture(GL_TEXTURE_2D, xfb->GetTexture());
+        glBufferSubData(
+                GL_ARRAY_BUFFER,
+                0,
+                static_cast<GLsizeiptr>(6 * sizeof(ScreenVertex)),
+                ScreenQuad
+            );
+
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+    }
 
     glBindVertexArray(mVertexArray);
     glBindBuffer(GL_ARRAY_BUFFER, mVertexBuffer);

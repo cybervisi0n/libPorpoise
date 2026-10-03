@@ -255,7 +255,12 @@ class GlobalState {
   inline void SetDepthUpdateEnabled(bool enabled) { mDepthUpdateEnabled = enabled; mDepthDirty = true;};
   inline void SetDepthFunc(GXCompare func) { mDepthFunc = func; mDepthDirty = true;};
   inline void SetDepthDirty(bool dirty) { mDepthDirty = dirty; };
+  inline void * GetEfbCopyDest() { return mEfbCopyDest; };
   inline void SetEfbCopyDest(void * dest) { mEfbCopyDest = dest; };
+  inline u16 GetEfbCopyX() { return mEfbCopyX; };
+  inline u16 GetEfbCopyY() { return mEfbCopyY; };
+  inline u16 GetEfbCopyWidth() { return mEfbCopyWidth; };
+  inline u16 GetEfbCopyHeight() { return mEfbCopyHeight; };
   inline void SetEfbCopyXY(u16 x, u16 y) { mEfbCopyX = x; mEfbCopyY = y; };
   inline void SetEfbCopyWidthHeight(u16 width, u16 height) {mEfbCopyWidth = width; mEfbCopyHeight = height;};
   void AddNativeEndianDisplayList(void * displayListPtr);

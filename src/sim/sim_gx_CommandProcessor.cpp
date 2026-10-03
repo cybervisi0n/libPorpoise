@@ -4,6 +4,7 @@
 
 #include <dolphin.h>
 #include <simulator/sim_gx_CommandProcessor.hpp>
+#include <simulator/sim_gx_FramebufferManager.hpp>
 #include <simulator/sim_gx_GlRenderer.hpp>
 #include <simulator/sim_gx_State.hpp>
 #include <simulator/sim_gx_Thread.hpp>
@@ -437,7 +438,7 @@ void CommandProcessor::ProcessBpReg(u8 regAddr, u32 value) {
             u16 width = GetRegValue(value, 10, 0);
             u16 height = GetRegValue(value, 10, 10);
 
-            gxState.SetEfbCopyWidthHeight(width, height);
+            gxState.SetEfbCopyWidthHeight(width + 1, height + 1);
         } break;
         // EFB Copy dest
         case 0x4B: {
@@ -452,6 +453,25 @@ void CommandProcessor::ProcessBpReg(u8 regAddr, u32 value) {
         case 0x52: {
             // This should flush the rendering pipeline and then do the copy
             GetGlRenderer().FlushRenderVerts();
+            auto& fbManager = FramebufferManager::GetInstance();
+
+            std::shared_ptr<FramebufferTexture> targetFramebuf = fbManager.GetTexture(gxState.GetEfbCopyDest());
+            if(targetFramebuf == nullptr) {
+                targetFramebuf = std::make_unique<FramebufferTexture>(gxState.GetEfbCopyWidth(), gxState.GetEfbCopyHeight());
+                fbManager.AddTexture(gxState.GetEfbCopyDest(), targetFramebuf);
+            }
+
+            std::shared_ptr<FramebufferTexture> efb = fbManager.GetEfb();
+
+            // Perform copy from efb to target framebuf
+            targetFramebuf->CopyFrom(*efb, gxState.GetEfbCopyX(), gxState.GetEfbCopyY(), gxState.GetEfbCopyWidth(), gxState.GetEfbCopyHeight());
+
+            // Check clear bit of efb copy info (and clear if necessary)
+            const bool clear = GetRegValue(value, 1, 11) != 0;
+
+            if(clear) {
+                GetGlRenderer().Clear();
+            }
         } break;
         // TLUT Load
         case 0x64:

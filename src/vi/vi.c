@@ -976,6 +976,9 @@ void VISetNextFrameBuffer(void* fb)
 	HorVer.bufAddr = (u32)fb;
 	FBSet          = 1;
 	setFbbRegs(&HorVer, &HorVer.tfbb, &HorVer.bfbb, &HorVer.rtfbb, &HorVer.rbfbb);
+	#ifdef LIBPORPOISE_PORT
+	SIM_VISetNextFramebuf(fb);
+	#endif
 	OSRestoreInterrupts(enabled);
 }
 

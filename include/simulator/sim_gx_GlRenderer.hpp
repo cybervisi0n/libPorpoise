@@ -16,6 +16,7 @@ class GlRenderer {
  public:
   void Draw(const RenderVertex * vertices, size_t numVertices, GXPrimitive primitive);
   void FlushRenderVerts();
+  void Clear();
 
   void DrawScreen();
 

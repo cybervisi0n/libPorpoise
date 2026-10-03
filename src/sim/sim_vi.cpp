@@ -19,6 +19,7 @@ static SDL_cond * s_retraceCond;
 static VIRetraceCallback s_preRetraceCallback = nullptr;
 static VIRetraceCallback s_postRetraceCallback = nullptr;
 
+static void * sNextFramebuf = nullptr;
 
 void Init() {
     s_retraceCond = SDL_CreateCond();
@@ -66,6 +67,14 @@ void SetPreRetraceCallback(VIRetraceCallback callback) {
 void SetPostRetraceCallback(VIRetraceCallback callback) {
     s_postRetraceCallback = callback;
 }
+
+void SetNextFramebuf(void * addr) {
+    sNextFramebuf = addr;
+}
+
+void * GetNextFramebuf() {
+    return sNextFramebuf;
+}
 }
 
 // C APIs
@@ -83,4 +92,8 @@ void SIM_VISetPostRetraceCallback(VIRetraceCallback callback) {
 
 u32 SIM_VIGetRetraceCount() {
     return SIM::VI::GetRetraceCount();
+}
+
+void SIM_VISetNextFramebuf(void * addr) {
+    SIM::VI::SetNextFramebuf(addr);
 }
