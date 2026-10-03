@@ -8,7 +8,7 @@
 #include <bit>
 #include <cstring>
 
-//#define PRINT_FORMAT_DESCRIPTOR 1
+#define PRINT_FORMAT_DESCRIPTOR 0
 
 namespace SIM::GX {
 
