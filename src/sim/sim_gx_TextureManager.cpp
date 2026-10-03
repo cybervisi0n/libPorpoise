@@ -4,6 +4,7 @@
 #include <dolphin.h>
 
 #include <simulator/sim_crc32.h>
+#include <simulator/sim_gx_FramebufferManager.hpp>
 #include <simulator/sim_gx_Thread.hpp>
 #include <simulator/sim_memory.hpp>
 #include <simulator/glad/glad.h>
@@ -690,6 +691,13 @@ void TextureManager::ProcessTextures() {
         if(tempTexture.mSourceData == nullptr) {
             continue; /* TODO: maybe unbind in gl? */
         }
+
+        // TODO Check if this was made into a framebuffer texture
+        //auto framebufferTex = FramebufferManager::GetInstance().GetTexture(tempTexture.mSourceData);
+        //if(framebufferTex != nullptr) {
+        //    printf("Here\n");
+        //}
+
 
         tempTexture.mWrapS = static_cast<GXTexWrapMode>(GET_REG_FIELD(texObj.mode0, 2, 0));
         tempTexture.mWrapT = static_cast<GXTexWrapMode>(GET_REG_FIELD(texObj.mode0, 2, 2));

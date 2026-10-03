@@ -461,6 +461,15 @@ void CommandProcessor::ProcessBpReg(u8 regAddr, u32 value) {
                 fbManager.AddTexture(gxState.GetEfbCopyDest(), targetFramebuf);
             }
 
+            // Check the TexFmt (bits 2, 15)
+
+            u32 texFmt = GetRegValue(value, 2, 15);
+            if(texFmt == GX_TF_Z8 || texFmt == GX_TF_Z16 || texFmt == 0x12) {
+                // This is a depth copy, currently unsupported
+                break;
+            }
+
+
             std::shared_ptr<FramebufferTexture> efb = fbManager.GetEfb();
 
             // Perform copy from efb to target framebuf
