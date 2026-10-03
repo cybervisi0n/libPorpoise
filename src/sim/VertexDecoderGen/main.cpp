@@ -304,6 +304,7 @@ int main(int argc, char ** argv) {
     ret += "#include \"simulator/byteswap.h\"\n";
     ret += "#include <memory>\n";
     ret += "#include <cstring>\n";
+    ret += "#include <cmath>\n";
 
 // Add some common functions
     ret += R""(
