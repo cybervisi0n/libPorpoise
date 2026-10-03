@@ -156,7 +156,7 @@ static std::string GenerateBinaryVertexStruct(const FormatDescriptor& fmtDesc) {
         }
     }
 
-    ret += "};\n";
+    ret += "}__attribute__((packed));\n";
     return ret;
 }
 
