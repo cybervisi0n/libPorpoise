@@ -191,12 +191,16 @@ void Shader::SetNumChannels(u32 numChans) {
     glUniform1ui(mNumChansLocation, numChans);
 }
 
-void Shader::SetInitialTevColors(const float * tevColors) {
-    glUniform4fv(mInitialTevColorsLocation, 4, tevColors);
+void Shader::SetInitialTevColors(const std::array<std::array<float, 4>, 4>& initialTevColors) {
+    for(int i=0; i < 4; i++) {
+        glUniform4fv(mInitialTevColorsLocations[i], 1, initialTevColors[i].data());
+    }
 }
 
-void Shader::SetTevKonstColors(const float * konstColors) {
-    glUniform4fv(mTevKonstColorsLocation, 4, konstColors);
+void Shader::SetTevKonstColors(const std::array<std::array<float, 4>, 4>& konstColors) {
+    for(int i=0; i < 4; i++) {
+        glUniform4fv(mKonstColorsLocations[i], 1, konstColors[i].data());
+    }
 }
 
 void Shader::SetNumTevStages(u32 stages) {
@@ -251,10 +255,15 @@ void Shader::SetupUniformLocations() {
     mMatrixMemoryBlock = glGetUniformBlockIndex(mProgram, "matrixMemoryBlock");
     mMatrixMemoryBlockBinding = 2;
     glUniformBlockBinding(mProgram, mMatrixMemoryBlock, mMatrixMemoryBlockBinding);
-    mInitialTevColorsLocation =
-        glGetUniformLocation(static_cast<GLuint>(mProgram), "initialTevColors");
-    mTevKonstColorsLocation =
-        glGetUniformLocation(static_cast<GLuint>(mProgram), "konstColors");
+
+    for(int i=0; i < 4; i++) {
+        const auto tevColorString = std::format("initialTevColors[{}]", i);
+        mInitialTevColorsLocations[i] = glGetUniformLocation(static_cast<GLuint>(mProgram), tevColorString.c_str());
+
+        const auto konstColorString = std::format("konstColors[{}]", i);
+        mInitialTevColorsLocations[i] = glGetUniformLocation(static_cast<GLuint>(mProgram), konstColorString.c_str());
+    }
+
     mNumTevStagesLocation =
         glGetUniformLocation(static_cast<GLuint>(mProgram), "numTevStages");
     mNumChansLocation = glGetUniformLocation(static_cast<GLuint>(mProgram), "u_numChans");

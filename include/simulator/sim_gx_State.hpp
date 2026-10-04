@@ -148,8 +148,8 @@ class GlobalState {
   inline TevStageConfig * GetTevStageConfigArray() { return mTevStages.data(); };
   inline GXTexMapID* GetTevTexMapArray() {return mTevTexMaps.data(); };
   inline TexGenConfig* GetTexGenArray() {return mTexGenConfigs.data(); };
-  inline const float* GetInitialTevColorsArray() {return mInitialTevColors[0].data(); };
-  inline const float* GetTevKonstColorsArray() {return mKonstColors[0].data(); };
+  inline const std::array<std::array<float, 4>, 4>& GetInitialTevColorsArray() {return mInitialTevColors; };
+  inline const std::array<std::array<float, 4>, 4>& GetTevKonstColorsArray() {return mKonstColors; };
   inline std::array<float, 4> GetTevColor(u8 reg) const {return mInitialTevColors[reg];};
   inline GXTexObjPriv& GetLoadedTexObj(u8 texMap) { return mLoadedTexObjs[texMap]; };
   inline GXTexRegionPriv& GetLoadedTexRegion(u8 texMap) { return mLoadedTexRegions[texMap]; };
