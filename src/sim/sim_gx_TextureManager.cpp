@@ -8,6 +8,7 @@
 #include <simulator/sim_gx_Thread.hpp>
 #include <simulator/sim_memory.hpp>
 #include <simulator/glad/glad.h>
+#include <simulator/byteswap.h>
 
 static SIM::GX::TextureManager sGXTextureManager = {};
 
@@ -345,9 +346,6 @@ static void ConvertRGB5A3(u8* in, u8* out, u16 width, u16 height, GXTexMapID tex
 
 static inline u32 RGB565ToRGBA8888(u16 c)
 {
-    // GX texture data is big-endian
-    c = (c << 8) | (c >> 8);
-
     u8 r = ((c >> 11) & 0x1F) * 255 / 31;
     u8 g = ((c >> 5)  & 0x3F) * 255 / 63;
     u8 b = ( c        & 0x1F) * 255 / 31;
@@ -362,8 +360,8 @@ static void DecodeDXT1Block(
     int dstX,
     int dstY)
 {
-    u16 c0 = *(const u16*)(block + 0);
-    u16 c1 = *(const u16*)(block + 2);
+    u16 c0 = bswap_16(*(const u16*)(block + 0));
+    u16 c1 = bswap_16(*(const u16*)(block + 2));
 
     u32 palette[4];
 
@@ -406,14 +404,7 @@ static void DecodeDXT1Block(
         palette[3] = 0;
     }
 
-    u32 indices = *(const u32*)(block + 4);
-
-    // indices are also big-endian
-    indices =
-        ((indices & 0x000000FF) << 24) |
-        ((indices & 0x0000FF00) << 8)  |
-        ((indices & 0x00FF0000) >> 8)  |
-        ((indices & 0xFF000000) >> 24);
+    u32 indices = bswap_32(*(const u32*)(block + 4));
 
     for (int y = 0; y < 4; y++)
     {
