@@ -11,7 +11,7 @@ FramebufferTexture::FramebufferTexture(u32 width, u32 height) :
     mHeight(height)
 {
     glGenTextures(1, &mTextureId);
-    SetInternalRes(1);
+    SetInternalRes(3);
 }
 
 FramebufferTexture::~FramebufferTexture() {
@@ -41,6 +41,8 @@ void FramebufferTexture::CopyFrom(const FramebufferTexture& source, u16 xOffset,
 
     int drawFbo = 0;
     int readFbo = 0;
+    int destInternalRes = mInternalRes;
+    int sourceInternalRes = source.GetInternalRes();
     glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &drawFbo);
     glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &readFbo);
 
@@ -49,7 +51,7 @@ void FramebufferTexture::CopyFrom(const FramebufferTexture& source, u16 xOffset,
     glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, source.GetTexture(), 0);
     glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, mTextureId, 0);
     glDrawBuffer(GL_COLOR_ATTACHMENT1);
-    glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    glBlitFramebuffer(0, 0, width * sourceInternalRes, height * sourceInternalRes, 0, 0, width * destInternalRes, height * destInternalRes, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, drawFbo);
     glBindFramebuffer(GL_READ_FRAMEBUFFER, readFbo);
@@ -58,7 +60,7 @@ void FramebufferTexture::CopyFrom(const FramebufferTexture& source, u16 xOffset,
 EmbeddedFramebuffer::EmbeddedFramebuffer() : FramebufferTexture(640, 480) {
     glGenFramebuffers(1, &mFboId);
     glGenRenderbuffers(1, &mRboId);
-    SetInternalRes(1);
+    SetInternalRes(3);
     
     glBindFramebuffer(GL_FRAMEBUFFER, mFboId);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, mRboId);
@@ -85,7 +87,7 @@ void EmbeddedFramebuffer::Activate() {
     glBindRenderbuffer(GL_RENDERBUFFER, mRboId);
     GLenum drawBufs[] = {GL_COLOR_ATTACHMENT0};
     glDrawBuffers(1, drawBufs);
-    glViewport(0, 0, 640, 480);
+    glViewport(0, 0, 640 * mInternalRes, 480 * mInternalRes);
 }
 
 FramebufferManager::FramebufferManager() {

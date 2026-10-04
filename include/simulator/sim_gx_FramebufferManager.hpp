@@ -11,6 +11,7 @@ class FramebufferTexture {
  public:
   FramebufferTexture(u32 width, u32 height);
   virtual ~FramebufferTexture();
+  inline u32 GetInternalRes() const {return mInternalRes;};
   virtual void SetInternalRes(u32 internalRes);
   inline unsigned int GetTexture() const { return mTextureId; };
   inline u32 GetInternalRes() { return mInternalRes; };
