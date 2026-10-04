@@ -41,17 +41,17 @@ struct TevStageConfig {
   GXTevMode mMode;
   GXTevOp mColorOperation;
   GXTevOp mAlphaOperation;
-  u32 pad1;
+  GXTevRegID mOutReg;
   GXTevColorArg mColorArgs[4];
   GXTevAlphaArg mAlphaArgs[4];
-  GXTevRegID mOutReg;
+  GXTevKColorSel mKonstColorSel;
+  GXTevKAlphaSel mKonstAlphaSel;
   GXTevClampMode mClampMode;
   GXTevBias mColorBias;
   GXTevScale mColorScale;
   GXTexCoordID mTexCoordId;
   GXTevBias mAlphaBias;
   GXTevScale mAlphaScale;
-  u32 pad2;
 };
 
 struct TexGenConfig {
@@ -148,7 +148,8 @@ class GlobalState {
   inline TevStageConfig * GetTevStageConfigArray() { return mTevStages.data(); };
   inline GXTexMapID* GetTevTexMapArray() {return mTevTexMaps.data(); };
   inline TexGenConfig* GetTexGenArray() {return mTexGenConfigs.data(); };
-  inline float* GetInitialTevColorsArray() {return mInitialTevColors[0].data(); };
+  inline const float* GetInitialTevColorsArray() {return mInitialTevColors[0].data(); };
+  inline const float* GetTevKonstColorsArray() {return mKonstColors[0].data(); };
   inline std::array<float, 4> GetTevColor(u8 reg) const {return mInitialTevColors[reg];};
   inline GXTexObjPriv& GetLoadedTexObj(u8 texMap) { return mLoadedTexObjs[texMap]; };
   inline GXTexRegionPriv& GetLoadedTexRegion(u8 texMap) { return mLoadedTexRegions[texMap]; };
@@ -177,6 +178,8 @@ class GlobalState {
   inline void SetNumTevStagesDirty(bool dirty) {mNumTevStagesDirty = dirty;};
   inline bool GetIsInitialTevColorsDirty() {return mInitialTevColorsDirty;};
   inline void SetInitialTevColorsDirty(bool dirty) {mInitialTevColorsDirty = dirty;};
+  inline bool GetIsKonstColorsDirty() {return mKonstColorsDirty;};
+  inline void SetKonstColorsDirty(bool dirty) {mKonstColorsDirty = dirty;};
   inline bool GetIsMatrixIndexDirty() {return mMatrixIndexDirty; };
   inline void SetMatrixIndexDirty(bool dirty) {mMatrixIndexDirty = dirty;};
   inline bool GetIsVertexAttributesDirty() { return mVertexAttributesDirty; };
@@ -251,6 +254,7 @@ class GlobalState {
     }
   };
   void SetTevColor(u8 reg, std::array<float, 4>& color);
+  void SetKonstColor(u8 colorIdx, std::array<float, 4>& color);
   inline void SetDepthCompareEnabled(bool enabled) { mDepthCompareEnabled = enabled; mDepthDirty = true; };
   inline void SetDepthUpdateEnabled(bool enabled) { mDepthUpdateEnabled = enabled; mDepthDirty = true;};
   inline void SetDepthFunc(GXCompare func) { mDepthFunc = func; mDepthDirty = true;};
@@ -289,6 +293,7 @@ class GlobalState {
   std::array<bool, 10> mNormalMatrixValid = {};
   std::array<float, 16> mProjectionMatrix = {};
   std::array<std::array<float, 4>, 4> mInitialTevColors = {};
+  std::array<std::array<float, 4>, 4> mKonstColors = {};
   bool mProjectionMatrixValid = false;
   std::array<u32, 0x100> mBpRegCache = {};
   u8 mNumTexGens = 0;
@@ -327,6 +332,7 @@ class GlobalState {
   bool mInitialTevColorsDirty = true;
   bool mMatrixIndexDirty = true;
   bool mVertexAttributesDirty = true;
+  bool mKonstColorsDirty = true;
 };
 
 void InitGlobalState();

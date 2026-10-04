@@ -191,8 +191,12 @@ void Shader::SetNumChannels(u32 numChans) {
     glUniform1ui(mNumChansLocation, numChans);
 }
 
-void Shader::SetInitialTevColors(float * tevColors) {
+void Shader::SetInitialTevColors(const float * tevColors) {
     glUniform4fv(mInitialTevColorsLocation, 4, tevColors);
+}
+
+void Shader::SetTevKonstColors(const float * konstColors) {
+    glUniform4fv(mTevKonstColorsLocation, 4, konstColors);
 }
 
 void Shader::SetNumTevStages(u32 stages) {
@@ -249,6 +253,8 @@ void Shader::SetupUniformLocations() {
     glUniformBlockBinding(mProgram, mMatrixMemoryBlock, mMatrixMemoryBlockBinding);
     mInitialTevColorsLocation =
         glGetUniformLocation(static_cast<GLuint>(mProgram), "initialTevColors");
+    mTevKonstColorsLocation =
+        glGetUniformLocation(static_cast<GLuint>(mProgram), "konstColors");
     mNumTevStagesLocation =
         glGetUniformLocation(static_cast<GLuint>(mProgram), "numTevStages");
     mNumChansLocation = glGetUniformLocation(static_cast<GLuint>(mProgram), "u_numChans");

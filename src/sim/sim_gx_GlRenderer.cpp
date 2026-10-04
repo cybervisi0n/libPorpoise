@@ -479,9 +479,15 @@ void GlRenderer::Draw(const RenderVertex * vertices, size_t numVertices, GXPrimi
         gxState.SetNumChannelsDirty(false);
     }
 
+    // TODO: refactor both of these to send one color at a time instead of entire array at once
     if(gxState.GetIsInitialTevColorsDirty()) {
         mCurrentShader->SetInitialTevColors(gxState.GetInitialTevColorsArray());
         gxState.SetInitialTevColorsDirty(false);
+    }
+
+    if(gxState.GetIsKonstColorsDirty()) {
+        mCurrentShader->SetTevKonstColors(gxState.GetTevKonstColorsArray());
+        gxState.SetKonstColorsDirty(false);
     }
 
     if(gxState.GetIsNumTevStagesDirty()) {

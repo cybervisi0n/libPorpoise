@@ -686,16 +686,18 @@ void CommandProcessor::ProcessBpReg(u8 regAddr, u32 value) {
                 u32 idx = (regAddr - 0xE0) / 2;
                 bool isRA = (regAddr & 1) == 0;
                 if (GetRegValue(value, 1, 23) != 0) {
-                  // K color register (8-bit components)
+                  // Konst color registers
                   if (idx < GX_MAX_KCOLOR) {
-                    //auto& kc = g_gxState.kcolors[idx];
-                    //if (isRA) {
-                    //  kc[0] = static_cast<float>(reg_get(value, 8, 0)) / 255.f;  // R
-                    //  kc[3] = static_cast<float>(reg_get(value, 8, 12)) / 255.f; // A
-                    //} else {
-                    //  kc[2] = static_cast<float>(reg_get(value, 8, 0)) / 255.f;  // B
-                    //  kc[1] = static_cast<float>(reg_get(value, 8, 12)) / 255.f; // G
-                    //}
+                    std::array<float, 4> kColor = {};
+                    if (isRA) {
+                      kColor[0] = static_cast<float>(GetRegValue(value, 8, 0)) / 255.f;
+                      kColor[3] = static_cast<float>(GetRegValue(value, 8, 12)) / 255.f;
+                    } else {
+                      kColor[2] = static_cast<float>(GetRegValue(value, 8, 0)) / 255.f;
+                      kColor[1] = static_cast<float>(GetRegValue(value, 8, 12)) / 255.f;
+                    }
+
+                    gxState.SetKonstColor(idx, kColor);
                   }
                 } else {
                   // TEV color register (11-bit signed components)
@@ -713,6 +715,47 @@ void CommandProcessor::ProcessBpReg(u8 regAddr, u32 value) {
                 }
                 gxState.SetTevDirty(true);
             } break;
+        
+        // Tev Konst select (0xF6-0xFD)
+        case 0xF6:
+        case 0xF7:
+        case 0xF8:
+        case 0xF9:
+        case 0xFA:
+        case 0xFB:
+        case 0xFC:
+        case 0xFD: 
+        {
+            u32 selIdx = regAddr - 0xF6;
+            // TODO: handle tev swaps
+
+            u32 stage0 = selIdx * 2;
+            u32 stage1 = selIdx * 2 + 1;
+            if(stage0 < GX_MAX_TEVSTAGE) {
+                auto& s = gxState.GetTevStageConfig(stage0);
+                auto colorSel = static_cast<GXTevKColorSel>(GetRegValue(value, 5, 4));
+                auto alphaSel = static_cast<GXTevKAlphaSel>(GetRegValue(value, 5, 9));
+
+                if(colorSel != s.mKonstColorSel || alphaSel != s.mKonstAlphaSel) {
+                    s.mKonstColorSel = colorSel;
+                    s.mKonstAlphaSel = alphaSel;
+                    gxState.SetTevDirty(true);
+                }
+            }
+
+
+            if(stage1 < GX_MAX_TEVSTAGE) {
+                auto& s = gxState.GetTevStageConfig(stage0);
+                auto colorSel = static_cast<GXTevKColorSel>(GetRegValue(value, 5, 14));
+                auto alphaSel = static_cast<GXTevKAlphaSel>(GetRegValue(value, 5, 19));
+
+                if(colorSel != s.mKonstColorSel || alphaSel != s.mKonstAlphaSel) {
+                    s.mKonstColorSel = colorSel;
+                    s.mKonstAlphaSel = alphaSel;
+                    gxState.SetTevDirty(true);
+                }
+            }
+        } break;
         default:
             break;
     }

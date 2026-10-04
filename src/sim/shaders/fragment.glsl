@@ -13,17 +13,17 @@ struct TevStageConfig {
   uint mMode;
   uint mColorOperation;
   uint mAlphaOperation;
-  uint pad1;
+  uint mOutReg;
   uvec4 mColorArgs;
   uvec4 mAlphaArgs;
-  uint mOutReg;
+  uint mKonstColorSel;
+  uint mKonstAlphaSel;
   uint mClampMode;
   uint mColorBias;
   uint mColorScale;
   uint mTexCoordId;
   uint mAlphaBias;
   uint mAlphaScale;
-  uint pad4;
 };
 
 layout (std140) uniform tevConfigBlock {
@@ -31,6 +31,7 @@ layout (std140) uniform tevConfigBlock {
 };
 
 uniform vec4 initialTevColors[4];
+uniform vec4 konstColors[4];
 
 
 vec4 tevRegs[4];
@@ -233,6 +234,101 @@ vec3 GetTevColorArg(uint stageNum, uint argNum) {
       result = vec3(0.5);
       break;
     case 14u: /* GX_CC_KONST */
+      switch(tevStageConfigs[stageNum].mKonstColorSel) {
+        case 0u /* GX_TEV_KCSEL_1 */:
+          result = vec3(1.0);
+          break;
+        case 1u /* GX_TEV_KCSEL_7_8 */:
+          result = vec3(0.875);
+          break;
+        case 2u /* GX_TEV_KCSEL_3_4 */:
+          result = vec3(0.75);
+          break;
+        case 3u /* GX_TEV_KCSEL_5_8 */:
+          result = vec3(0.625);
+          break;
+        case 4u /* GX_TEV_KCSEL_1_2 */:
+          result = vec3(0.5);
+          break;
+        case 5u /* GX_TEV_KCSEL_3_8 */:
+          result = vec3(0.375);
+          break;
+        case 6u /* GX_TEV_KCSEL_1_4 */:
+          result = vec3(0.25);
+          break;
+        case 7u /* GX_TEV_KCSEL_1_8 */:
+          result = vec3(0.125);
+          break;
+        
+        case 12u /* GX_TEV_KCSEL_K0 */:
+          result = konstColors[0].rgb;
+          break;
+        case 13u /* GX_TEV_KCSEL_K1 */:
+          result = konstColors[1].rgb;
+          break;
+        case 14u /* GX_TEV_KCSEL_K2 */:
+          result = konstColors[2].rgb;
+          break;
+        case 15u /* GX_TEV_KCSEL_K3 */:
+          result = konstColors[3].rgb;
+          break;
+        
+        case 16u /* GX_TEV_KCSEL_K0_R */:
+          result = vec3(konstColors[0].r);
+          break;
+        case 17u /* GX_TEV_KCSEL_K1_R */:
+          result = vec3(konstColors[1].r);
+          break;
+        case 18u /* GX_TEV_KCSEL_K2_R */:
+          result = vec3(konstColors[2].r);
+          break;
+        case 19u /* GX_TEV_KCSEL_K3_R */:
+          result = vec3(konstColors[3].r);
+          break;
+
+        case 20u /* GX_TEV_KCSEL_K0_G */:
+          result = vec3(konstColors[0].g);
+          break;
+        case 21u /* GX_TEV_KCSEL_K1_G */:
+          result = vec3(konstColors[1].g);
+          break;
+        case 22u /* GX_TEV_KCSEL_K2_G */:
+          result = vec3(konstColors[2].g);
+          break;
+        case 23u /* GX_TEV_KCSEL_K3_G */:
+          result = vec3(konstColors[3].g);
+          break;
+
+        case 24u /* GX_TEV_KCSEL_K0_B */:
+          result = vec3(konstColors[0].b);
+          break;
+        case 25u /* GX_TEV_KCSEL_K1_B */:
+          result = vec3(konstColors[1].b);
+          break;
+        case 26u /* GX_TEV_KCSEL_K2_B */:
+          result = vec3(konstColors[2].b);
+          break;
+        case 27u /* GX_TEV_KCSEL_K3_B */:
+          result = vec3(konstColors[3].b);
+          break;
+
+        case 28u /* GX_TEV_KCSEL_K0_A */:
+          result = vec3(konstColors[0].a);
+          break;
+        case 29u /* GX_TEV_KCSEL_K1_A */:
+          result = vec3(konstColors[1].a);
+          break;
+        case 30u /* GX_TEV_KCSEL_K2_A */:
+          result = vec3(konstColors[2].a);
+          break;
+        case 31u /* GX_TEV_KCSEL_K3_A */:
+          result = vec3(konstColors[3].a);
+          break;
+        
+        default /* invalid */:
+          result = vec3(0.0);
+          break;
+      }
       break;
     case 15u: /* GX_CC_ZERO */
       result = vec3(0.0);
@@ -271,7 +367,101 @@ float GetTevAlphaArg(uint stageNum, uint argNum) {
       result = rasa;
       break;
     case 6u: /* GX_CA_KONST */
-      result = 1.0; /* TODO: Not always 1.0 */
+      switch(tevStageConfigs[stageNum].mKonstAlphaSel) {
+        case 0u /* GX_TEV_KASEL_1 */:
+          result = 1.0;
+          break;
+        case 1u /* GX_TEV_KASEL_7_8 */:
+          result = 0.875;
+          break;
+        case 2u /* GX_TEV_KASEL_3_4 */:
+          result = 0.75;
+          break;
+        case 3u /* GX_TEV_KASEL_5_8 */:
+          result = 0.625;
+          break;
+        case 4u /* GX_TEV_KASEL_1_2 */:
+          result = 0.5;
+          break;
+        case 5u /* GX_TEV_KASEL_3_8 */:
+          result = 0.375;
+          break;
+        case 6u /* GX_TEV_KASEL_1_4 */:
+          result = 0.25;
+          break;
+        case 7u /* GX_TEV_KASEL_1_8 */:
+          result = 0.125;
+          break;
+        
+        case 12u /* GX_TEV_KASEL_K0 */:
+          result = konstColors[0].a;
+          break;
+        case 13u /* GX_TEV_KASEL_K1 */:
+          result = konstColors[1].a;
+          break;
+        case 14u /* GX_TEV_KASEL_K2 */:
+          result = konstColors[2].a;
+          break;
+        case 15u /* GX_TEV_KASEL_K3 */:
+          result = konstColors[3].a;
+          break;
+        
+        case 16u /* GX_TEV_KASEL_K0_R */:
+          result = konstColors[0].r;
+          break;
+        case 17u /* GX_TEV_KASEL_K1_R */:
+          result = konstColors[1].r;
+          break;
+        case 18u /* GX_TEV_KASEL_K2_R */:
+          result = konstColors[2].r;
+          break;
+        case 19u /* GX_TEV_KASEL_K3_R */:
+          result = konstColors[3].r;
+          break;
+
+        case 20u /* GX_TEV_KASEL_K0_G */:
+          result = konstColors[0].g;
+          break;
+        case 21u /* GX_TEV_KASEL_K1_G */:
+          result = konstColors[1].g;
+          break;
+        case 22u /* GX_TEV_KASEL_K2_G */:
+          result = konstColors[2].g;
+          break;
+        case 23u /* GX_TEV_KASEL_K3_G */:
+          result = konstColors[3].g;
+          break;
+
+        case 24u /* GX_TEV_KASEL_K0_B */:
+          result = konstColors[0].b;
+          break;
+        case 25u /* GX_TEV_KASEL_K1_B */:
+          result = konstColors[1].b;
+          break;
+        case 26u /* GX_TEV_KASEL_K2_B */:
+          result = konstColors[2].b;
+          break;
+        case 27u /* GX_TEV_KASEL_K3_B */:
+          result = konstColors[3].b;
+          break;
+
+        case 28u /* GX_TEV_KASEL_K0_A */:
+          result = konstColors[0].a;
+          break;
+        case 29u /* GX_TEV_KASEL_K1_A */:
+          result = konstColors[1].a;
+          break;
+        case 30u /* GX_TEV_KASEL_K2_A */:
+          result = konstColors[2].a;
+          break;
+        case 31u /* GX_TEV_KASEL_K3_A */:
+          result = konstColors[3].a;
+          break;
+        
+        default /* invalid */:
+          result = 0.0;
+          break;
+      }
       break;
     case 7u: /* GX_CA_ZERO */
       result = 0.0;

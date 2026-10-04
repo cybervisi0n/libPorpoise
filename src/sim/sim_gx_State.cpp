@@ -350,6 +350,13 @@ void GlobalState::SetTevColor(u8 reg, std::array<float, 4>& color) {
     
 }
 
+void GlobalState::SetKonstColor(u8 colorIdx, std::array<float, 4>& color) {
+    if(mKonstColors[colorIdx] != color) {
+        mKonstColors[colorIdx] = color;
+        mKonstColorsDirty = true;
+    }
+}
+
 
 
 void GlobalState::RefreshPositionMatrices(u32 firstAddress, u32 endAddress) {

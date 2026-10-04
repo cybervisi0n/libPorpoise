@@ -40,7 +40,8 @@ class Shader {
   void SetLights(const Light * lights, const ColorChannel * colorChannels);
   void SetMatrixIndex(u32 idx);
   void SetNumChannels(u32 numChans);
-  void SetInitialTevColors(float * tevColors);
+  void SetInitialTevColors(const float * tevColors);
+  void SetTevKonstColors(const float * konstColors);
   void SetNumTevStages(u32 stages);
 
 
@@ -82,6 +83,7 @@ class Shader {
   int mMatrixMemoryBlock;
   int mMatrixMemoryBlockBinding;
   int mInitialTevColorsLocation;
+  int mTevKonstColorsLocation;
   int mNumTevStagesLocation;
   int mNumChansLocation;
   int mMtxIdxALocation;
