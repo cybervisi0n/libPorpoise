@@ -261,7 +261,7 @@ void Shader::SetupUniformLocations() {
         mInitialTevColorsLocations[i] = glGetUniformLocation(static_cast<GLuint>(mProgram), tevColorString.c_str());
 
         const auto konstColorString = std::format("konstColors[{}]", i);
-        mInitialTevColorsLocations[i] = glGetUniformLocation(static_cast<GLuint>(mProgram), konstColorString.c_str());
+        mKonstColorsLocations[i] = glGetUniformLocation(static_cast<GLuint>(mProgram), konstColorString.c_str());
     }
 
     mNumTevStagesLocation =
