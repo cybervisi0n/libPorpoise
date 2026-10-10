@@ -269,6 +269,18 @@ class GlobalState {
   inline void SetEfbCopyWidthHeight(u16 width, u16 height) {mEfbCopyWidth = width; mEfbCopyHeight = height;};
   void AddNativeEndianDisplayList(void * displayListPtr);
   bool IsDisplayListNativeEndian(void * displayListPtr);
+  inline bool GetBlendEnable() { return mBlendEnable; };
+  inline void SetBlendEnable(bool enable) { mBlendEnable = enable; };
+  inline GXBlendMode GetBlendMode() {return mBlendMode;};
+  inline void SetBlendMode(GXBlendMode mode) {mBlendMode = mode;};
+  inline GXBlendFactor GetBlendSourceFactor() { return mBlendSourceFactor; };
+  inline void SetBlendSourceFactor(GXBlendFactor factor) {mBlendSourceFactor = factor;};
+  inline GXBlendFactor GetBlendDestFactor() { return mBlendDestFactor; };
+  inline void SetBlendDestFactor(GXBlendFactor factor) {mBlendDestFactor = factor;};  
+  inline GXLogicOp GetBlendOp() { return mBlendOp; };
+  inline void SetBlendOp(GXLogicOp op) {mBlendOp = op;};
+  inline bool GetIsBlendDirty() { return mBlendDirty; };
+  inline void SetBlendDirty(bool dirty) {mBlendDirty = dirty;};
 
  private:
   static std::array<float, 16> IdentityMatrix();
@@ -315,6 +327,11 @@ class GlobalState {
   u16 mEfbCopyY = 0;
   u16 mEfbCopyWidth = 0;
   u16 mEfbCopyHeight = 0;
+  bool mBlendEnable;
+  GXBlendMode mBlendMode;
+  GXBlendFactor mBlendSourceFactor;
+  GXBlendFactor mBlendDestFactor;
+  GXLogicOp mBlendOp;
   bool mTextureDirty = true;
   bool mTevDirty = true;
   GXCompare mDepthFunc;
@@ -333,6 +350,7 @@ class GlobalState {
   bool mMatrixIndexDirty = true;
   bool mVertexAttributesDirty = true;
   bool mKonstColorsDirty = true;
+  bool mBlendDirty = true;
 };
 
 void InitGlobalState();
