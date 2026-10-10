@@ -325,6 +325,7 @@ void GlRenderer::Draw(const RenderVertex * vertices, size_t numVertices, GXPrimi
         gxState.GetIsNumTevStagesDirty() ||
         gxState.GetIsInitialTevColorsDirty() ||
         gxState.GetIsMatrixIndexDirty() ||
+        gxState.GetIsBlendDirty() ||
         ((u32)ToGlPrimitive(primitive) != (u32)mRenderVertsPrimitive) ||
         (mRenderVertsIndexed != IsIndexed(primitive))
     ) {
@@ -372,6 +373,83 @@ void GlRenderer::Draw(const RenderVertex * vertices, size_t numVertices, GXPrimi
         gxState.SetVertexAttributesDirty(false);
     }
 
+    if(gxState.GetIsBlendDirty()) {
+        /*
+typedef enum _GXBlendFactor {
+	GX_BL_ZERO        = 0, // 0.0
+	GX_BL_ONE         = 1, // 1.0
+	GX_BL_SRCCOL      = 2,
+	GX_BL_DSTCOL      = GX_BL_SRCCOL, // Frame buffer color, Source color
+	GX_BL_INVSRCCOL   = 3,
+	GX_BL_INVDSTCOL   = GX_BL_INVSRCCOL, // 1.0 - (Frame buffer color), 1.0 - (Source color)
+	GX_BL_SRCALPHA    = 4,               // Source alpha
+	GX_BL_INVSRCALPHA = 5,               // 1.0 - (Source alpha)
+	GX_BL_DSTALPHA    = 6,               // Frame buffer alpha
+	GX_BL_INVDSTALPHA = 7,               // 1.0 - (Frame buffer alpha)
+} GXBlendFactor;
+        */
+
+        static constexpr int GXtoGLSourceFactors[] = {
+            GL_ZERO,
+            GL_ONE,
+            GL_DST_COLOR,
+            GL_ONE_MINUS_DST_COLOR,
+            GL_SRC_ALPHA,
+            GL_ONE_MINUS_SRC_ALPHA,
+            GL_DST_ALPHA,
+            GL_ONE_MINUS_DST_ALPHA
+        };
+
+        
+        static constexpr int GXtoGLDestFactors[] = {
+            GL_ZERO,
+            GL_ONE,
+            GL_SRC_COLOR,
+            GL_ONE_MINUS_SRC_COLOR,
+            GL_SRC_ALPHA,
+            GL_ONE_MINUS_SRC_ALPHA,
+            GL_DST_ALPHA,
+            GL_ONE_MINUS_DST_ALPHA
+        };
+
+        if(gxState.GetBlendEnable()) {
+            glEnable(GL_BLEND);
+            int sourceFactor = GL_ONE;
+            int destFactor = GL_ZERO;
+
+            switch(gxState.GetBlendMode()) {
+                case GX_BM_BLEND:
+                    glBlendEquation(GL_FUNC_ADD);
+                    sourceFactor = GXtoGLSourceFactors[gxState.GetBlendSourceFactor()];
+                    destFactor = GXtoGLDestFactors[gxState.GetBlendDestFactor()];
+                    break;
+                case GX_BM_SUBTRACT:
+                    glBlendEquation(GL_FUNC_REVERSE_SUBTRACT);
+                    sourceFactor = GL_ONE;
+                    destFactor = GL_ONE;
+                    break;
+                case GX_BM_LOGIC:
+                    break;
+                case GX_BM_NONE:
+                    glBlendEquation(GL_FUNC_ADD);
+                    sourceFactor = GL_ONE;
+                    destFactor = GL_ZERO;
+                    break;
+                default:
+                    glBlendEquation(GL_FUNC_ADD);
+                    break;
+            }
+
+            
+            glBlendFunc(sourceFactor, destFactor);
+        } else {
+            glDisable(GL_BLEND);
+        }
+        
+        
+        gxState.SetBlendDirty(false);
+    }
+
     if(gxState.GetIsTextureDirty()) {
         TextureManager::GetInstance().ProcessTextures();
         gxState.SetTextureDirty(false);
@@ -384,11 +462,45 @@ void GlRenderer::Draw(const RenderVertex * vertices, size_t numVertices, GXPrimi
             glDisable(GL_DEPTH_TEST);
         }
 
-        //if(gxState.GetDepthUpdateEnabled()) {
-        //    glDepthMask(GL_TRUE);
-        //} else {
-        //    glDepthMask(GL_FALSE);
-        //}
+        #if 0
+        if(gxState.GetDepthUpdateEnabled()) {
+            glDepthMask(GL_TRUE);
+        } else {
+            glDepthMask(GL_FALSE);
+        }
+        #endif
+
+        
+        int depthFunc = 0;
+        switch(gxState.GetDepthFunc()) {
+            case GX_NEVER:
+                depthFunc = GL_NEVER;
+                break;
+            case GX_LESS:
+                depthFunc = GL_LESS;
+                break;
+            case GX_EQUAL:
+                depthFunc = GL_EQUAL;
+            case GX_LEQUAL:
+                depthFunc = GL_LEQUAL;
+                break;
+            case GX_GREATER:
+                depthFunc = GL_GREATER;
+                break;
+            case GX_NEQUAL:
+                depthFunc = GL_NOTEQUAL;
+                break;
+            case GX_GEQUAL:
+                depthFunc = GL_GEQUAL;
+                break;
+            default:
+            case GX_ALWAYS:
+                depthFunc = GL_ALWAYS;
+                break;
+        }
+
+        glDepthFunc(depthFunc);
+
         gxState.SetDepthDirty(false);
     }
 
@@ -508,7 +620,11 @@ void GlRenderer::DrawScreen() {
         return;
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
+    glDisable(GL_BLEND);
+    glDisable(GL_DEPTH_TEST);
+    auto& gxState = GetGlobalState();
+    gxState.SetBlendDirty(true);
+    gxState.SetDepthDirty(true);
 
     static constexpr ScreenVertex ScreenQuad[] = {
         { -1.0f, -1.0f, 0.0f, 0.0f, 0.0f },

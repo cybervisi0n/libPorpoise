@@ -10,6 +10,7 @@
 #include "dolphin/gx/GXMisc.h"
 #include <SDL2/SDL.h>
 
+
 namespace SIM::VI {
 
 static u32 s_waitForRetraceCount = 0;

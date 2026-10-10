@@ -331,7 +331,7 @@ static void ConvertRGB5A3(u8* in, u8* out, u16 width, u16 height, GXTexMapID tex
                 {
                     u16 v = *inPtr++;
 
-                    v = (v << 8) | (v >> 8);
+                    v = bswap_16(v);
 
                     int px = bx * blockW + x;
                     int py = by * blockH + y;

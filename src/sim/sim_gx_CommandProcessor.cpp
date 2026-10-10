@@ -425,6 +425,32 @@ void CommandProcessor::ProcessBpReg(u8 regAddr, u32 value) {
             gxState.SetDepthCompareEnabled(GetRegValue(value, 1, 0) != 0);
             gxState.SetDepthFunc(static_cast<GXCompare>(GetRegValue(value, 3, 1)));
             gxState.SetDepthUpdateEnabled(GetRegValue(value, 1, 4) != 0);
+            gxState.SetDepthDirty(true);
+        } break;
+        // Blend Mode
+        case 0x41: {
+            bool blendEn = GetRegValue(value, 1, 0) != 0;
+            bool logicEn = GetRegValue(value, 1, 1) != 0;
+            //g_gxState.colorUpdate = reg_get(value, 1, 3) != 0;
+            //g_gxState.alphaUpdate = reg_get(value, 1, 4) != 0;
+            gxState.SetBlendDestFactor(static_cast<GXBlendFactor>(GetRegValue(value, 3, 5)));
+            gxState.SetBlendSourceFactor(static_cast<GXBlendFactor>(GetRegValue(value, 3, 8)));
+            bool subtract = GetRegValue(value, 1, 11) != 0;
+            gxState.SetBlendOp(static_cast<GXLogicOp>(GetRegValue(value, 4, 12)));
+            GXBlendMode mode;
+            if (subtract) {
+              mode = GX_BM_SUBTRACT;
+            } else if (blendEn) {
+              mode = GX_BM_BLEND;
+            } else if (logicEn) {
+              mode = GX_BM_LOGIC;
+            } else {
+              mode = GX_BM_NONE;
+            }
+
+            gxState.SetBlendEnable(blendEn);
+            gxState.SetBlendMode(mode);
+            gxState.SetBlendDirty(true);
         } break;
         // CpDispSrc
         case 0x49: {
